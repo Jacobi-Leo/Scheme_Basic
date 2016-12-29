@@ -47,7 +47,7 @@ misidentifying the two concepts is pointed out.
 The expansion based on grid average,
 similar to Taylor's expansion on nodal value, is deduced to construct
 correct scheme in terms of grid average and to obtain modified
-partial difference equation (mPDE)
+partial differential equation (mPDE)
 which determines the order of accuracy of numerical scheme theoretically.
 Correct high order scheme, taking QUICK scheme as an example, is constructed in different
 approaches. Furthermore, the property of interpolation coefficients is analyzed.
@@ -1394,17 +1394,19 @@ minimum absolute error.
 
 \section{Conclusion} \label{sec:conclusion}
 
-In this work, we introduce the definition of grid average and nodal
+In this work, we define the grid average and nodal
 value rigorously, as well as the accuracy of numerical schemes. By
 constructing the expansion based on grid average, analysis on order of
 accuracy of schemes based on grid average (which are ubiquitous in
-FVMs) becomes feasible. A Theoretical analysis implies that:
+FVMs) becomes feasible. Theoretical analysis implies that:
 \begin{enumerate}
 \item The correct order of accuracy of a specific scheme, especially
 high order ones, can only be obtained by rigorous deduction of
 mPDE.
 \item The misuse of grid average and nodal value in constructing numerical
 schemes will lead to reducing the order of accuracy. 
+\item When constructing FVM schemes, the expansion based grid average
+  should be utilized instead of Taylor's expansion.
 \item The absolute error of high order scheme decrease very fast as
 grid size reduces, but due to existence of round-off error, the
 absolute error does not decrease infinitely. Theoretically there
