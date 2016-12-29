@@ -1,22 +1,13 @@
 \documentclass[]{article}
 \usepackage[a4paper]{geometry}
-%\usepackage{minted}
-%\usemintedstyle{bw}
+\usepackage[colorlinks]{hyperref}
 \usepackage{amsmath}
 \usepackage{bm}
 \usepackage{siunitx}
 \usepackage{color}
 \usepackage{fancyhdr}
 \usepackage{float}
-\usepackage{subcaption}
-% \usepackage{eumeitem}
 \usepackage[]{graphicx}
-% 
-%% \num{10e2}
-%% \mmHg
-%% \SI{4}{\milli\meter}
-%% \gg  % instead of $>\!\!>$
-% 
 
 \pagestyle{plain}
 \graphicspath{{figures/}}
@@ -30,52 +21,64 @@
 \newcommand{\Karman}{K\'arm\'an}
 % \newcommand{\diff}{\,\mathrm{d}}
 \newcommand{\diff}{d}
+\def\Matrix#1{\left(#1\right)}
+\def\sgn{\hbox{\rm sgn}}
+\def\iph{{i+\frac{1}{2}}}
+\def\imh{{i-\frac{1}{2}}}
+\def\jph{{j+\frac{1}{2}}}
+\def\jmh{{j-\frac{1}{2}}}
+\def\Matrix#1{\left(#1\right)}
+\def\abs#1{\left|#1\right|}
+\def\cb#1{\vbox to0pt{\vss\hbox to 0pt{\hss{}#1\hss}\vss}}%
+\def\aabs#1{\left\|#1\right\|}
+\def\x{\hat{x}}
 
-\input{texhead.h}
-
-\title{The Grid Average and Nodal Value in High Order Scheme}
-\author{Qingdong Cai, Zeyu Liu}
+\title{Grid Average and Nodal Value in High Order Scheme}
+\author{Zeyu Liu, Qingdong Cai}
 \date{\today}
 
 \begin{document}
 \maketitle
 \begin{abstract}
-    The concepts of nodal value and grid average is clarified in this work,
-    strict distinction between the two concepts in constructing
-    numerical schemes is made,  and some common faults in
-    misidentifying the two concepts are pointed out. 
-    The expansion based on grid average,
-    similar to Taylor's expansion on nodal value, is deduced to construct
-    correct scheme in terms of grid average and to obtain modified equation
-    which determines the order of accuracy of numerical scheme theoretically.
-    Correct high order scheme, taking QUICK scheme as an example, is constructed in different
-    approaches. Furthermore, the property of interpolation coefficients is analyzed, and
-    the absolute error of high order schemes is studied numerically. 
+The concepts of nodal value and grid average are clarified in this work,
+strict distinction between the two concepts in constructing
+numerical schemes is made,  and one common fault in
+misidentifying the two concepts is pointed out. 
+The expansion based on grid average,
+similar to Taylor's expansion on nodal value, is deduced to construct
+correct scheme in terms of grid average and to obtain modified
+partial difference equation (mPDE)
+which determines the order of accuracy of numerical scheme theoretically.
+Correct high order scheme, taking QUICK scheme as an example, is constructed in different
+approaches. Furthermore, the property of interpolation coefficients is analyzed.
+We also pointed out that for high order schemes, round-off error
+dominates the absolute error in fine grid and truncation
+error dominates the absolute error in coarse grid.
 \end{abstract}
 \tableofcontents
 
 \section{Introduction}\label{sec:intro}
 The numerical scheme can be classified in terms of accuracy. To a 
-specific scheme, the order of accuracy is defined as the order of leading term
-in truncation error of the corresponding modified equation. Heuristic estimates on
-order of accuracy is usually given by observing the orders of leading terms in
-each individual term's truncation error in the discretization process of the
-primary PDE, and the lowest order among all terms is selected as the order of that
-scheme. This method provides exact result only for first- and second-order 
+specific finite volume scheme, the order of accuracy is defined as the order of leading term
+in truncation error of the corresponding mPDE.
+However, value on grid node points, either element center or grid vertex is
+regarded as integrated value in constructing numerical schemes with
+conservation laws.
+This method provides exact result only for first- and second-order 
 schemes and fails in high order schemes such as Quadratic Upwind Interpolation
 Convective Kinematics (QUICK) scheme \cite{leonard1979stable}.
-It is a common fault that the result of heuristic analysis is treated as exact
-order of accuracy of high order numerical scheme.
+It is a common fault that value on specific points are regarded as
+integrated value.
 
 There are two types of data with which numerical schemes are constructed: nodal
-value and grid average, and the confusion between the two concepts is another
-common fault. To a specific function, whether scalar or vectorial,
+value and grid average. To a specific function, whether scalar or vectorial,
 nodal values are defined as values of the function at grid node points,
-and grid averages are defined as integral average of the function on each
-grid element.
+and grid averages are defined as integral of the function on each
+grid element divided by the volume of the element (we use ``integral
+average'' to refer to this process briefly following in this work).
 While constructing first- and second-order schemes, piecewise constant
 approximation and piecewise linear approximation are assumed respectively.
-In those cases, value at the center of grid is equivalent to integral average 
+In those cases, value at the center of grid element is equivalent to integral average 
 over the grid element, so it is not necessary to distinguish nodal value and grid
 average in construction of numerical schemes. However, in high order schemes
 (higher than second-order), nodal value and grid average are inconsistent,
@@ -108,9 +111,8 @@ absolute error and grid size is studied, the theoretical analysis
 implies that for a specific scheme, there exists one optimum size:
 truncation error dominates the absolution error when grid size is larger
 than the optimum, and round-off error dominates the absolute error when
-grid size is smaller than the optimum. Since truncation error declines while
-grid size shrinks, and round-off error increases while grid size shrinks, the
-absolute error tends to minimum when grid size is set to that optimum.
+grid size is smaller than the optimum. 
+
 
 \section{Expansion Based on Grid Average}\label{sec:expansion-based-grid}
 
@@ -125,15 +127,15 @@ averages.
 
 We take 1-D convection equation as example:
 \begin{equation}
-    \dfrac{\partial u}{\partial t}+a\dfrac{\partial
-    u}{\partial x}=0,\hspace{1cm}x\in [0,L],\hspace{5mm} t\in [0,T].
-    \label{eq:mod-e1} 
+\dfrac{\partial u}{\partial t}+a\dfrac{\partial
+u}{\partial x}=0,\hspace{1cm}x\in [0,L],\hspace{5mm} t\in [0,T].
+\label{eq:mod-e1} 
 \end{equation}
 rewrite Eq.~(\ref{eq:mod-e1}) into conservative form:
 \begin{equation}
-    \dfrac{\partial u}{\partial t}+\dfrac{\partial f
-    }{\partial x}=0,
-    \label{eq:conservative-convection}
+\dfrac{\partial u}{\partial t}+\dfrac{\partial f
+}{\partial x}=0,
+\label{eq:conservative-convection}
 \end{equation}
 while the flux function $f(x) =au$ produces the linear equation in
 Eq.~(\ref{eq:mod-e1}), and other PDE is attained with different flux
@@ -141,22 +143,22 @@ function such as $f(u) = \frac 12 u^2$ produces a non-linear equation.
 
 Given initial data of Eq.~(\ref{eq:mod-e1}), the solution is
 \begin{equation*}
-    u = u(x,t) = u_0(x-at).
+u = u(x,t) = u_0(x-at).
 \end{equation*}
 Discretize Eq.~(\ref{eq:mod-e1}) in space-time $(x, t)$ with uniform grid,
 then the coordinates of grid nodes are:
 \begin{align*}
-    x_j=j \Delta x,\hspace{1cm} j=0,1,2,\ldots,N;\hspace{1cm} \Delta x
-    =\frac{L}{N}. \\
-    t^n = n\Delta t,\hspace{1cm} n=0,1,2,\ldots,M;\hspace{1cm} \Delta t
-    =\frac{T}{M}.
+x_\jph=j \Delta x,\hspace{1cm} j=0,1,2,\ldots,N;\hspace{1cm} \Delta x
+=\frac{L}{N}. \\
+t^n = n\Delta t,\hspace{1cm} n=0,1,2,\ldots,M;\hspace{1cm} \Delta t
+=\frac{T}{M}.
 \end{align*}
 There are two kinds of unknowns: nodal values $u^n_j=u(x_j,t^n)$ in FDM
 and grid averages in FVM which is defined as
 \begin{equation}
-    \bar u_{j}^n = \frac{1}{\Delta x}\int_{x_{\jmh}}^{x_{\jph}}
-    u(x,t^n)\diff x.
-    \label{eq:def_grid_avg}
+\bar u_{j}^n = \frac{1}{\Delta x}\int_{x_{\jmh}}^{x_{\jph}}
+u(x,t^n)\diff x.
+\label{eq:def_grid_avg}
 \end{equation}
 Obviously grid averages differ from nodal values, but the difference
 vanishes in first- and second-order schemes due to piecewise constant
@@ -171,65 +173,65 @@ denoted as $V(x,t)$,
 should be introduced to produce the proper expansion. Define the notation
 $V_{j+1/2}(t)=V(x_{j+1/2}t)$, then we have
 \begin{equation}
-    \bar u_{j+k}^{n+\ell}=
-    \frac{V_{\jph+k}^{n+\ell}-V_{\jmh+k}^{n+\ell}}{\Delta x}.
-    \label{eq:uVrelation}
+\bar u_{j+k}^{n+\ell}=
+\frac{V_{\jph+k}^{n+\ell}-V_{\jmh+k}^{n+\ell}}{\Delta x}.
+\label{eq:uVrelation}
 \end{equation}
 Since $V_{\jph+k}^{n+l}$ is nodal value, Taylor's expansion can be
 applied to $V(x,t)$ at point $(j,n)$:
 \begin{equation}
-    V_{\jph+k}^{n+\ell} = V_{j}^n + \sum_{m=1}^{\infty}
-    \left[ 
-    \frac{1}{m!} 
-    \left(
-    \ell\Delta t \frac{\partial}{\partial t} + 
-    \left(k+\frac{1}{2}\right) \Delta x\frac{\partial}{\partial x}
-    \right)^m V_j^n
-    \right].
-    \label{eq:V_taylor}
+V_{\jph+k}^{n+\ell} = V_{j}^n + \sum_{m=1}^{\infty}
+\left[ 
+\frac{1}{m!} 
+\left(
+\ell\Delta t \frac{\partial}{\partial t} + 
+\left(k+\frac{1}{2}\right) \Delta x\frac{\partial}{\partial x}
+\right)^m V_j^n
+\right].
+\label{eq:V_taylor}
 \end{equation}
 Substitute Eq.~(\ref{eq:V_taylor}) into Eq.~(\ref{eq:uVrelation}), we
 have:
 \begin{equation}
-    \bar u_{j+k}^{n+\ell} = \frac{1}{\Delta x} \sum_{m=1}^{\infty} 
-    \left[
-    \frac{1}{m!}\left( \ell\Delta t\frac{\partial}{\partial t} +
-    \left(k+\frac{1}{2}\right)\Delta x\frac{\partial}{\partial x}\right)^m 
-    V_j^n -
-    \frac{1}{m!}\left(\ell\Delta t\frac{\partial}{\partial t} +
-    \left(k-\frac{1}{2}\right)\Delta x\frac{\partial}{\partial x}\right)^m 
-    V_j^n
-    \right].
-    \label{eq:uVrelation2}
+\bar u_{j+k}^{n+\ell} = \frac{1}{\Delta x} \sum_{m=1}^{\infty} 
+\left[
+\frac{1}{m!}\left( \ell\Delta t\frac{\partial}{\partial t} +
+\left(k+\frac{1}{2}\right)\Delta x\frac{\partial}{\partial x}\right)^m 
+V_j^n -
+\frac{1}{m!}\left(\ell\Delta t\frac{\partial}{\partial t} +
+\left(k-\frac{1}{2}\right)\Delta x\frac{\partial}{\partial x}\right)^m 
+V_j^n
+\right].
+\label{eq:uVrelation2}
 \end{equation}
 The derivatives to variable $t$ all vanish, and the derivatives of $V$ to
 variable $x$ can be replaced by relation $u=V_x$:
 \begin{equation}
-    \bar u_{j+k}^{n+\ell} = \frac{1}{\Delta x} \sum_{m=1}^{\infty}\frac{1}{m!}
-    \left\{
-    \sum_{p=1}^m C_m^p(\ell\Delta t)^{m-p} 
-    \left[
-        \sum_{s=0}^p \frac{1}{2^s}C_p^s k^{p-s}\left[1-(-1)^s\right]
-    \right]
-    \Delta x^p 
-    \left. 
-    \frac{\partial ^{m-1}u}{\partial t^{m-p}\partial x^{p-1}}
-    \right|_j^n
-    \right\}.
-    \label{eq:ubar_taylor}
+\bar u_{j+k}^{n+\ell} = \frac{1}{\Delta x} \sum_{m=1}^{\infty}\frac{1}{m!}
+\left\{
+\sum_{p=1}^m C_m^p(\ell\Delta t)^{m-p} 
+\left[
+\sum_{s=0}^p \frac{1}{2^s}C_p^s k^{p-s}\left[1-(-1)^s\right]
+\right]
+\Delta x^p 
+\left. 
+\frac{\partial ^{m-1}u}{\partial t^{m-p}\partial x^{p-1}}
+\right|_j^n
+\right\}.
+\label{eq:ubar_taylor}
 \end{equation}
 Eq.~(\ref{eq:ubar_taylor}) is series expansion of
 grid average, so substitute it into numerical schemes and we can
-attain the modified equation of that scheme.
+attain the mPDE of that scheme.
 
 Consider several special conditions for Eq.~(\ref{eq:ubar_taylor}).
 When $\ell = 0, k=0$:
 \begin{equation}
-    \bar u_j^n = \sum_{m=1}^\infty \frac{1-(-1)^m}{2^m m!} \Delta x^{m-1}
-    \left.  \frac{\partial ^{m-1}u}{\partial x^{m-1}} \right|_j^n
-    =\sum_{p=0}^{\infty} \frac{1}{4^p(2p+1)!} \Delta x^{2p}
-    \left. \frac{\partial ^{2p}u}{\partial x^{2p}}\right|_j^n.
-    \label{eq:ubar_taylor_l0k0}
+\bar u_j^n = \sum_{m=1}^\infty \frac{1-(-1)^m}{2^m m!} \Delta x^{m-1}
+\left.  \frac{\partial ^{m-1}u}{\partial x^{m-1}} \right|_j^n
+=\sum_{p=0}^{\infty} \frac{1}{4^p(2p+1)!} \Delta x^{2p}
+\left. \frac{\partial ^{2p}u}{\partial x^{2p}}\right|_j^n.
+\label{eq:ubar_taylor_l0k0}
 \end{equation}
 The second equation in Eq.~(\ref{eq:ubar_taylor_l0k0}) is obtained
 because the  even  terms in the summation over  $m$ is definitely zero,
@@ -237,60 +239,60 @@ so consider odd terms and substitute $m$ with $m=2p+1$ to transfer the
 summation over $m$ to summation over $p$. When $k=0$ is given and
 $\ell$ is arbitrary:
 \begin{align}
-    \bar u_{j}^{n+\ell}
-    &\displaystyle
-    = \frac{1}{\Delta x}
-    \sum_{m=1}^{\infty}\frac{1}{m!}
-    \left[
-    \sum_{p=0}^m
-    (\ell\Delta t)^{m-p}\frac{1-(-1)^p}{2^p}\Delta x^p
-    \left. \frac{\partial^m V}{\partial t^{m-p} \partial x^p} \right|_j^n 
-    \right]  \label{eq:ubar_taylor_k0p}\\   
-    &\displaystyle
-    = \sum_{m=1}^{\infty}\frac{1}{m!}
-    \left[
-    \sum_{s=0}^{\left[\frac{m-1}{2}\right]} \frac{1}{4^s} C_m^{2s+1} 
-    (\ell\Delta t)^{m-2s-1}\Delta x^{2s} 
-    \left.
-    \frac{\partial^{m-1} u}{\partial t^{m-2s-1}\partial x^{2s}}
-    \right|_j^n 
-    \right], 
-    \label{eq:ubar_taylor_k0}
+\bar u_{j}^{n+\ell}
+&\displaystyle
+= \frac{1}{\Delta x}
+\sum_{m=1}^{\infty}\frac{1}{m!}
+\left[
+\sum_{p=0}^m
+(\ell\Delta t)^{m-p}\frac{1-(-1)^p}{2^p}\Delta x^p
+\left. \frac{\partial^m V}{\partial t^{m-p} \partial x^p} \right|_j^n 
+\right]  \label{eq:ubar_taylor_k0p}\\   
+&\displaystyle
+= \sum_{m=1}^{\infty}\frac{1}{m!}
+\left[
+\sum_{s=0}^{\left[\frac{m-1}{2}\right]} \frac{1}{4^s} C_m^{2s+1} 
+(\ell\Delta t)^{m-2s-1}\Delta x^{2s} 
+\left.
+\frac{\partial^{m-1} u}{\partial t^{m-2s-1}\partial x^{2s}}
+\right|_j^n 
+\right], 
+\label{eq:ubar_taylor_k0}
 \end{align}
 with $\left[\frac{m-1}{2}\right]$ representing floor function of
 $\frac{m-1}{2}$. When given $\ell =0$ and $k$ is arbitrary:
 \begin{align}
-    \bar u_{j+k}^\ell &= \sum_{m=1}^\infty \frac{\Delta x^{m-1}}{m!} 
-    \left[
-    \sum_{p=0}^m \frac{1-(-1)^p}{2^p}C_m^pk^{m-p} 
-    \right]
-    \left. \frac{\partial ^{m-1}u}{\partial x^{m-1}}\right|_j^n
-    \label{eq:ubar_taylor_l0p} \\
-    &=\sum_{m=1}^\infty \frac{\Delta x^{m-1}}{m!} 
-    \left[
-    \sum_{s=0}^{\left[\frac{m-1}{2}\right]}\frac{1}{4^s} C_m^{2s+1}k^{m-2s-1} 
-    \right]
-    \left. \frac{\partial ^{m-1}u}{\partial x^{m-1}}\right|_j^n.
-    \label{eq:ubar_taylor_l0}
+\bar u_{j+k}^\ell &= \sum_{m=1}^\infty \frac{\Delta x^{m-1}}{m!} 
+\left[
+\sum_{p=0}^m \frac{1-(-1)^p}{2^p}C_m^pk^{m-p} 
+\right]
+\left. \frac{\partial ^{m-1}u}{\partial x^{m-1}}\right|_j^n
+\label{eq:ubar_taylor_l0p} \\
+&=\sum_{m=1}^\infty \frac{\Delta x^{m-1}}{m!} 
+\left[
+\sum_{s=0}^{\left[\frac{m-1}{2}\right]}\frac{1}{4^s} C_m^{2s+1}k^{m-2s-1} 
+\right]
+\left. \frac{\partial ^{m-1}u}{\partial x^{m-1}}\right|_j^n.
+\label{eq:ubar_taylor_l0}
 \end{align}
 Some special terms for Eq.~(\ref{eq:uVrelation2}) can be deduced by
 CAS\footnote{In this work, Mathematica programs are deployed.}
 (Computer Algebra System):
 \begin{equation}
-    \begin{cases}
-    \displaystyle
-    \bar u_{j}^{n} &\displaystyle =  u_j^n + \frac{1}{24}\Delta x^2 u_{xx} + 
-    \frac{1}{1920} \Delta x^4 u_{xxxx} +\cdots\\[3mm]
-    \displaystyle
-    \bar u_{j-1}^n  &\displaystyle = u_j^n - \Delta x\, u_x + \frac{13}{24} \Delta x^2 u_{xx} -\frac{5}{24}\Delta x^3 u_{xxx}  +\frac{121}{1920}\Delta x^4 u_{xxxx}+\cdots \\[3mm]
-    \displaystyle
-    \bar u_{j+1}^n  & \displaystyle = u_j^n + \Delta x\, u_x + \frac{13}{24} \Delta x^2 u_{xx} +\frac{5}{24}\Delta x^3 u_{xxx}  +\frac{121}{1920}\Delta x^4 u_{xxxx}+\cdots \\[3mm]
-    \displaystyle
-    \bar u_{j}^{n+1}& \displaystyle = u_j^n+\Delta t\, u_t + \frac{1}{2}\Delta t^2 u_{tt} + \frac{1}{24} \Delta x^2 u_{xx} + \frac{1}{6}\Delta t^3 u_{ttt} + \frac{1}{24}\Delta t\Delta x^2 u_{xxt} + \cdots   \\[3mm]
-    \displaystyle
-    \bar u_{j}^{n-1}& \displaystyle = u_j^n-\Delta t\, u_t + \frac{1}{2}\Delta t^2 u_{tt} + \frac{1}{24} \Delta x^2 u_{xx} - \frac{1}{6}\Delta t^3 u_{ttt} -c \frac{1}{24}\Delta t\Delta x^2 u_{xxt} + \cdots
-    \end{cases}
-    \label{eq:ubar_taylor_many}
+\begin{cases}
+\displaystyle
+\bar u_{j}^{n} &\displaystyle =  u_j^n + \frac{1}{24}\Delta x^2 u_{xx} + 
+\frac{1}{1920} \Delta x^4 u_{xxxx} +\cdots\\[3mm]
+\displaystyle
+\bar u_{j-1}^n  &\displaystyle = u_j^n - \Delta x\, u_x + \frac{13}{24} \Delta x^2 u_{xx} -\frac{5}{24}\Delta x^3 u_{xxx}  +\frac{121}{1920}\Delta x^4 u_{xxxx}+\cdots \\[3mm]
+\displaystyle
+\bar u_{j+1}^n  & \displaystyle = u_j^n + \Delta x\, u_x + \frac{13}{24} \Delta x^2 u_{xx} +\frac{5}{24}\Delta x^3 u_{xxx}  +\frac{121}{1920}\Delta x^4 u_{xxxx}+\cdots \\[3mm]
+\displaystyle
+\bar u_{j}^{n+1}& \displaystyle = u_j^n+\Delta t\, u_t + \frac{1}{2}\Delta t^2 u_{tt} + \frac{1}{24} \Delta x^2 u_{xx} + \frac{1}{6}\Delta t^3 u_{ttt} + \frac{1}{24}\Delta t\Delta x^2 u_{xxt} + \cdots   \\[3mm]
+\displaystyle
+\bar u_{j}^{n-1}& \displaystyle = u_j^n-\Delta t\, u_t + \frac{1}{2}\Delta t^2 u_{tt} + \frac{1}{24} \Delta x^2 u_{xx} - \frac{1}{6}\Delta t^3 u_{ttt} -c \frac{1}{24}\Delta t\Delta x^2 u_{xxt} + \cdots
+\end{cases}
+\label{eq:ubar_taylor_many}
 \end{equation}
 
 
@@ -303,17 +305,17 @@ CAS\footnote{In this work, Mathematica programs are deployed.}
 Assuming $a>0$ in Eq.~(\ref{eq:mod-e1}), the first-order upwind
 scheme based on nodal value is:
 \begin{equation}
-    u_j^{n+1} =u_j^n-c(u_j^n-u_{j-1}^n) \qquad 
-    c=\frac{a\Delta t}{\Delta x}.
-    \label{eq:up1}
+u_j^{n+1} =u_j^n-c(u_j^n-u_{j-1}^n) \qquad 
+c=\frac{a\Delta t}{\Delta x}.
+\label{eq:up1}
 \end{equation}
 This scheme is first-order in both space and time for point $(j,n)$,
-and its modified equation is
+and its mPDE is
 \begin{equation}
-    u_t+au_x = \frac{a\Delta x}{2}(1-c)u_{xx} - 
-    \frac{a\Delta x^2}{6}(1-c)(1-2c)u_{xxx} +
-    \frac{a\Delta x^3}{24}(1-c)(1-6c+6c^2)u_{xxxx}+\cdots
-    \label{eq:upwind_modified_equ}
+u_t+au_x = \frac{a\Delta x}{2}(1-c)u_{xx} - 
+\frac{a\Delta x^2}{6}(1-c)(1-2c)u_{xxx} +
+\frac{a\Delta x^3}{24}(1-c)(1-6c+6c^2)u_{xxxx}+\cdots
+\label{eq:upwind_modified_equ}
 \end{equation}
 The truncation error of the equation is $O(\Delta x)$.
 
@@ -321,13 +323,13 @@ If the scheme is constructed based on grid average, we should first
 integrate Eq.~(\ref{eq:mod-e1}) over interval
 $[x_{\jmh},x_{\jph}]\times [t^n,t^{n+1}]$
 \begin{equation}
-    \bar u_j^{n+1}  = \bar u_j^n -c \left( \hat u_{\jph}-\hat u_{\jmh} \right),
-    \label{eq:wave_integral}
+\bar u_j^{n+1}  = \bar u_j^n -c \left( \hat u_{\jph}-\hat u_{\jmh} \right),
+\label{eq:wave_integral}
 \end{equation}
 while
 \begin{equation}
-    \hat u_{\jph} =\frac{1}{\Delta t} \int_{t^n}^{t^{n+1}} u(x_{\jph},t) \diff t
-    \label{eq:u_integral}
+\hat u_{\jph} =\frac{1}{\Delta t} \int_{t^n}^{t^{n+1}} u(x_{\jph},t) \diff t
+\label{eq:u_integral}
 \end{equation}
 is the average value of $u(x,t)$ over a time interval at a fixed
 spacial point. Up to the above step, no approximation is introduced, and
@@ -339,16 +341,16 @@ $\bar u_{j+1}^n$, for $a>0$ we take the upwind value:
 $\hat u_{\jph}=\bar u_j$ and obtain the same scheme as in
 Eq.~(\ref{eq:up1}):
 \begin{equation}
-    \bar u_j^{n+1}=\bar u_j^n-c(\bar u_j^n-\bar u_{j-1}^n)
-    \label{eq:up1V} 
+\bar u_j^{n+1}=\bar u_j^n-c(\bar u_j^n-\bar u_{j-1}^n)
+\label{eq:up1V} 
 \end{equation}
-Utilizing Eq.~(\ref{eq:ubar_taylor_many}) and CAS, modified equation
+Utilizing Eq.~(\ref{eq:ubar_taylor_many}) and CAS, mPDE
 of Eq.~(\ref{eq:up1V}) is attained:
 \begin{equation}
-    u_t+au_x = \frac{a\Delta x}{2}(1-c)u_{xx} -
-    \frac{a\Delta x^2}{6}(1-c)(1-2c)u_{xxx} +
-    \frac{a\Delta x^3}{24}(1-c)(1-6c+6c^2)u_{xxxx}+\cdots
-    \label{eq:up1V_modified}
+u_t+au_x = \frac{a\Delta x}{2}(1-c)u_{xx} -
+\frac{a\Delta x^2}{6}(1-c)(1-2c)u_{xxx} +
+\frac{a\Delta x^3}{24}(1-c)(1-6c+6c^2)u_{xxxx}+\cdots
+\label{eq:up1V_modified}
 \end{equation}
 
 According to Eq.~(\ref{eq:up1V}) and Eq.~(\ref{eq:up1V_modified}), the
@@ -365,29 +367,29 @@ $\bar u^n_{j-1}$ give exactly the first-order upwind scheme.
 
 Apply FTCS Scheme to Eq.~(\ref{eq:mod-e1}), we obtain:
 \begin{equation}
-    \dfrac{u_j^{n+1}-u_j^n}{\Delta t}+a\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x}=0
-    \label{eq:FTCS}
+\dfrac{u_j^{n+1}-u_j^n}{\Delta t}+a\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x}=0
+\label{eq:FTCS}
 \end{equation}
-with its modified equation:
+with its mPDE:
 \begin{equation}
-    u_t+au_x=-\dfrac{a\Delta x}{2}c\, u_{xx}-\dfrac{a\Delta x^2}{6}(1+2c^2)u_{xxx} -\dfrac{a\Delta x^3}{12}c(2+3c^2)u_{xxxx}+\cdots
-    \label{eq:FTCS_modified}
+u_t+au_x=-\dfrac{a\Delta x}{2}c\, u_{xx}-\dfrac{a\Delta x^2}{6}(1+2c^2)u_{xxx} -\dfrac{a\Delta x^3}{12}c(2+3c^2)u_{xxxx}+\cdots
+\label{eq:FTCS_modified}
 \end{equation}
 The Scheme has first-order accuracy in time and second-order accuracy
 in space, and its truncation error has a highest order of
 two. Meanwhile, we have $\mu_2 = -\dfrac{a}{2}c\Delta x<0$, which
 causes instability of the scheme.
 %% \footnote{The instability can be rigorously
-%%   demonstrated by Fourier expansion of $\bar u_j^n$.
-%%   Considering one particular wave number $k$, $\bar u_j^n=A_k^n\me^{\mi kx}$. 
-%%   Substitute this into scheme Eq.~(\ref{eq:FTCS}), the amplification
-%%   coefficient is obtained:
-%%   \begin{equation*}
-%%     G=\frac{A_k^{n+1}}{A_k^n}=1-ic\sin \beta,
-%%     \qquad
-%%     c=\frac{a\Delta t}{\Delta x},\quad \beta=k\Delta x.
-%%   \end{equation*}
-%%   Only $c=0$ satisfies $|G|\leq 1$, which shows that FTCS scheme is instable.
+%% demonstrated by Fourier expansion of $\bar u_j^n$.
+%% Considering one particular wave number $k$, $\bar u_j^n=A_k^n\me^{\mi kx}$. 
+%% Substitute this into scheme Eq.~(\ref{eq:FTCS}), the amplification
+%% coefficient is obtained:
+%% \begin{equation*}
+%%   G=\frac{A_k^{n+1}}{A_k^n}=1-ic\sin \beta,
+%%   \qquad
+%%   c=\frac{a\Delta t}{\Delta x},\quad \beta=k\Delta x.
+%% \end{equation*}
+%% Only $c=0$ satisfies $|G|\leq 1$, which shows that FTCS scheme is instable.
 %% }
 
 The FTCS scheme can also be constructed by grid averages as basic
@@ -396,10 +398,10 @@ to the first-order and spacial derivatives to the second-order, and
 with the first three formulae in Eq.~(\ref{eq:ubar_taylor_many}) and
 regard $u_j^n$, $u_x$, and $u_{xx}$ as unknowns, we obtain:
 \begin{equation}
-  u_x = \frac{\bar u_{j+1}^n-\bar u_{j-1}^n}{2\Delta x} \qquad
-  u_{xx} = \frac{\bar u_{j+1}^n-2\bar u_j^n+\bar u_{j-1}^n}{\Delta x^2} \qquad
-  u_j^n = \frac{-\bar u_{j+1}^n + 26\bar u_j^n - \bar u_{j-1}^n}{24}.
-  \label{eq:du012}
+u_x = \frac{\bar u_{j+1}^n-\bar u_{j-1}^n}{2\Delta x} \qquad
+u_{xx} = \frac{\bar u_{j+1}^n-2\bar u_j^n+\bar u_{j-1}^n}{\Delta x^2} \qquad
+u_j^n = \frac{-\bar u_{j+1}^n + 26\bar u_j^n - \bar u_{j-1}^n}{24}.
+\label{eq:du012}
 \end{equation}
 The expressions above are second-order accurate in space. In the
 fourth formula in Eq.~(\ref{eq:ubar_taylor_many}), keep time
@@ -417,11 +419,11 @@ u_{xx}\right) = \bar u_j^{n+1}- \bar u_{j}^n.
 Substitute these expressions into Eq.~(\ref{eq:mod-e1}), the FTCS
 scheme based on grid average is obtained:
 \begin{equation}
-  \bar u_j^{n+1} = \bar u_j^n - \frac{c}{2} \left(\bar u_{j+1}^n-\bar u_{j-1}^n\right),
-  \label{eq:FTCS_grid_avg}
+\bar u_j^{n+1} = \bar u_j^n - \frac{c}{2} \left(\bar u_{j+1}^n-\bar u_{j-1}^n\right),
+\label{eq:FTCS_grid_avg}
 \end{equation}
 which is at accord with Eq.~(\ref{eq:FTCS}). It can be further deduced
-that the modified equation of Eq.~(\ref{eq:FTCS_grid_avg}) is at
+that the mPDE of Eq.~(\ref{eq:FTCS_grid_avg}) is at
 accord with that of Eq.~(\ref{eq:FTCS_modified}).
 
 \subsection{Lax-Wendroff Scheme} \label{sec:lax-wendroff-scheme}
@@ -430,37 +432,37 @@ Taking nodal value as the basic variable in discretization of first-order
 wave equation Eq.~(\ref{eq:mod-e1}), Taylor's expansion can be
 applied to estimate $u_j^{n+1}$ with point $(j,n)$:
 \begin{equation}
-  u_j^{n+1}=u_j^n+\Delta t\,u_t +\frac{1}{2}\Delta t^2 u_{tt}+O(\Delta t^3).
-  \label{eq:LW-T} 
+u_j^{n+1}=u_j^n+\Delta t\,u_t +\frac{1}{2}\Delta t^2 u_{tt}+O(\Delta t^3).
+\label{eq:LW-T} 
 \end{equation}
 Transfer the time derivatives into spacial derivatives with
 Eq.~(\ref{eq:mod-e1}):
 \begin{equation*}
-  u_t=-a\, u_x,\hspace{1cm} u_{tt} = a^2 u_{xx},
+u_t=-a\, u_x,\hspace{1cm} u_{tt} = a^2 u_{xx},
 \end{equation*}
 and substitute the above expressions into Eq.~(\ref{eq:LW-T}) we
 obtain
 \begin{equation}
-  u_j^{n+1}=u_j^n-a\Delta t\, u_x +\frac{1}{2}a^2\Delta t^2 u_{xx}+O(\Delta t^3).
-  \label{eq:LW-T1} 
+u_j^{n+1}=u_j^n-a\Delta t\, u_x +\frac{1}{2}a^2\Delta t^2 u_{xx}+O(\Delta t^3).
+\label{eq:LW-T1} 
 \end{equation}
 Applying central difference to partial derivatives over $x$, we have
 \begin{equation*}
-  u_x=\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x} \qquad
-  u_{xx}=\dfrac{u_{j+1}^n-2u_j^n+u_{j-1}^n}{\Delta x^2}.
+u_x=\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x} \qquad
+u_{xx}=\dfrac{u_{j+1}^n-2u_j^n+u_{j-1}^n}{\Delta x^2}.
 \end{equation*}
 Finally the FD scheme of Eq.~(\ref{eq:mod-e1}) is
 \begin{equation*}
-  \label{eq:LW} \dfrac{u_{j}^{n+1}-u_{j}^n}{\Delta
-    t}+a\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x} =\dfrac{1}{2}a^2\Delta
-  t\dfrac{u_{j+1}^n-2u_j^n+u_{j-1}^n}{\Delta x^2},
+\label{eq:LW} \dfrac{u_{j}^{n+1}-u_{j}^n}{\Delta
+t}+a\dfrac{u_{j+1}^n-u_{j-1}^n}{2\Delta x} =\dfrac{1}{2}a^2\Delta
+t\dfrac{u_{j+1}^n-2u_j^n+u_{j-1}^n}{\Delta x^2},
 \end{equation*}
 which is called Lax-Wendroff Scheme, and it has second-order accuracy
-both temporal and spacial. The modified equation of Lax-Wendroff
+both temporal and spacial. The mPDE of Lax-Wendroff
 scheme is
 \begin{equation}
-  u_t+au_x=-\frac{a\Delta x^2}{6}(1-c^2)u_{xxx} -\frac{a\Delta x^3}{8}c(1-c^2)u_{xxxx}+\cdots
-  \label{eq:LW_modified}
+u_t+au_x=-\frac{a\Delta x^2}{6}(1-c^2)u_{xxx} -\frac{a\Delta x^3}{8}c(1-c^2)u_{xxxx}+\cdots
+\label{eq:LW_modified}
 \end{equation}
 According to Eq.~(\ref{eq:LW_modified}), Lax-Wendroff Scheme is a
 dispersion scheme with second-order accuracy. Since the signs of $a$
@@ -468,20 +470,20 @@ and $c$ are always the same, $\mu_4=-\frac{a\Delta x^3}{8}c(1-c^2)$ is
 always negative given $\abs{c} < 1$, which is to the benefit of
 stability of scheme.
 % \footnote{The amplification coefficient of the scheme can also be deduced:
-%   \begin{equation*}
-%     G=1-c^2(1-\cos\beta)-ic\sin\beta,\quad\quad
-%     c=\frac{a\Delta t}{\Delta x},\quad \beta=k\Delta x,
-%   \end{equation*}
-%   \begin{equation*}
-%     \abs{G}=1-4c^2(1-c^2)\sin^4\frac{\beta}{2}.
-%   \end{equation*}
-%   The stability condition is
-%   \begin{equation*}
-%     \abs{c}\leq 1,\quad\mbox{which means}\quad
-%     \frac{\abs{a}\Delta t}{\Delta x}\leq 1.
-%   \end{equation*}
-%   Since $\abs{G}=1-4c^2(1-c^2)\sin^4\frac{\beta}{2}$, the stability condition is
-%   $\abs{c}\leq1$.}
+% \begin{equation*}
+%   G=1-c^2(1-\cos\beta)-ic\sin\beta,\quad\quad
+%   c=\frac{a\Delta t}{\Delta x},\quad \beta=k\Delta x,
+% \end{equation*}
+% \begin{equation*}
+%   \abs{G}=1-4c^2(1-c^2)\sin^4\frac{\beta}{2}.
+% \end{equation*}
+% The stability condition is
+% \begin{equation*}
+%   \abs{c}\leq 1,\quad\mbox{which means}\quad
+%   \frac{\abs{a}\Delta t}{\Delta x}\leq 1.
+% \end{equation*}
+% Since $\abs{G}=1-4c^2(1-c^2)\sin^4\frac{\beta}{2}$, the stability condition is
+% $\abs{c}\leq1$.}
 
 The above Lax-Wendroff's process can also be applied to case with grid
 average as basic variable, and construct the corresponding scheme.
@@ -499,14 +501,14 @@ u_{j-1}^n\right),
 \]
 which is actually
 \begin{equation}
-  \bar u_j^{n+1} = \bar u_j^n -\frac{c}{2}\left(\bar u_{j+1}^n-\bar u_{j-1}^n\right) +
-  \frac{c^2}{2}\left(\bar u_{j+1}^n-2\bar u_j^n+\bar u_{j-1}^n\right).
-  \label{eq:LWav}
+\bar u_j^{n+1} = \bar u_j^n -\frac{c}{2}\left(\bar u_{j+1}^n-\bar u_{j-1}^n\right) +
+\frac{c^2}{2}\left(\bar u_{j+1}^n-2\bar u_j^n+\bar u_{j-1}^n\right).
+\label{eq:LWav}
 \end{equation}
 Eq.~(\ref{eq:LWav}) is consistent with Eq.~(\ref{eq:LW}). The
-modified equation can also be deduced:
+mPDE can also be deduced:
 \begin{equation*}
-  u_t+au_x=-\frac{a\Delta x^2}{6}(1-c^2)u_{xxx} -\frac{a\Delta x^3}{8}c(1-c^2)u_{xxxx}+\cdots
+u_t+au_x=-\frac{a\Delta x^2}{6}(1-c^2)u_{xxx} -\frac{a\Delta x^3}{8}c(1-c^2)u_{xxxx}+\cdots
 \end{equation*}
 which matches Eq.~(\ref{eq:LW_modified}) in leading terms.
 
@@ -520,8 +522,8 @@ section.
 If we regard grid average $\bar u_j$ as nodal value $u_j$, which is what the primary QUICK
 scheme actually assumes \cite{leonard1979stable}, the semi-discrete scheme is
 \begin{equation}
-  \frac{d u_j}{d t}+\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0,
-  \label{eq:QUICK-duj-dt}
+\frac{d u_j}{d t}+\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0,
+\label{eq:QUICK-duj-dt}
 \end{equation}
 with $f_\jph$ being the flux across interface. Flux $f$ is approximated by
 quadratic polynomials. According to the sign of $a_\jph = \partial f/\partial
@@ -530,13 +532,14 @@ x_{j+1}
 \}$ or $\{ x_j, x_{j+1}, x_{j+2} \}$ to satisfy upwind
 property. Flux $f_\jph$ at interface $x_\jph$ is
 \begin{equation*}
-  f_{\jph}=\left\{\begin{array}{ll}
-  \displaystyle
-  \frac{1}{2}(f_j+f_{j+1})-\frac{1}{8}(f_{j-1}-2f_j+f_{j+1}),\hspace{1cm} & a_{\jph}>0;\\[3mm]
-  \displaystyle
-  \frac{1}{2}(f_j+f_{j+1})-\frac{1}{8}(f_j-2f_{j+1}+f_{j+2}),\hspace{1cm}
-  & a_{\jph}\leq 0.\\
-  \end{array}\right.
+f_{\jph}=\left\{\begin{array}{ll}
+\displaystyle
+\frac{1}{2}(f_j+f_{j+1})-\frac{1}{8}(f_{j-1}-2f_j+f_{j+1}),\hspace{1cm} & a_{\jph}>0;\\[3mm]
+\displaystyle
+\frac{1}{2}(f_j+f_{j+1})-\frac{1}{8}(f_j-2f_{j+1}+f_{j+2}),\hspace{1cm}
+& a_{\jph}\leq 0.\\
+\end{array}
+\right.
 \end{equation*}
 The above equation differs from Eq.~(\ref{eq:QUICK-flux}) on which we apply our
 method, though it hold
@@ -546,18 +549,18 @@ by Taylor's expansion directly to nodal values showing that the scheme
 actually has only second-order accuracy. We rewrite the flux term into
 fourth-order central scheme part as well as correction term (the red-colored part):
 \begin{equation}
-  f_{\jph}=\frac{9}{16}(f_j+f_{j+1})-\frac{1}{16}(f_{j-1}+f_{j+2}){\color{red}+\frac{1}{16}\abs{a}(u_{j+2}-3u_{j+1}+3u_{j}-u_{j-1})},
-  \label{eq:QUICK-flux-nodal}
+f_{\jph}=\frac{9}{16}(f_j+f_{j+1})-\frac{1}{16}(f_{j-1}+f_{j+2}){\color{red}+\frac{1}{16}\abs{a}(u_{j+2}-3u_{j+1}+3u_{j}-u_{j-1})},
+\label{eq:QUICK-flux-nodal}
 \end{equation}
 and we can deduce that:
 \[
 u_{j+2}-3u_{j+1}+3u_{j}-u_{j-1}=\frac{\partial^3 u}{\partial x^3}\Delta x^3+\frac{1}{8}\frac{\partial^5 u}{\partial x^5}\Delta x^5+\cdots
 \]
-Further applying Eq.~(\ref{eq:ubar_taylor_many}), the modified equation of
+Further applying Eq.~(\ref{eq:ubar_taylor_many}), the mPDE of
 scheme~(\ref{eq:QUICK-duj-dt}) is 
 \begin{equation}
-  u_t+au_x={\color{red}-\frac{1}{24}a\Delta x^2 u_{xxx}}+\frac{1}{16}\abs{a}\Delta x^3 u_{xxxx}+\frac{11}{380}a\Delta x^4 u_{xxxxx} +\cdots
-  \label{eq:mod-quick-nodal}
+u_t+au_x={\color{red}-\frac{1}{24}a\Delta x^2 u_{xxx}}+\frac{1}{16}\abs{a}\Delta x^3 u_{xxxx}+\frac{11}{380}a\Delta x^4 u_{xxxxx} +\cdots
+\label{eq:mod-quick-nodal}
 \end{equation}
 The leading term of truncation error of Eq.~(\ref{eq:mod-quick-nodal}) is
 third-order, which means that the scheme has only second-order accuracy instead
@@ -572,8 +575,8 @@ accuracy.
 The general scheme for the wave equation $u_t+a u_x=0$ with
 conservative semi-discretization and with grid average as basic variable:
 \begin{equation}
-  \frac{d}{dt}\bar u_j = -\frac{1}{\Delta x}(f_{\jph}-f_{\jmh})=\sum_{k=-J}^{J-1}\alpha_k\left(\bar u_{j+k+1}-\bar u_{j+k}\right).
-  \label{eq:linearsch}
+\frac{d}{dt}\bar u_j = -\frac{1}{\Delta x}(f_{\jph}-f_{\jmh})=\sum_{k=-J}^{J-1}\alpha_k\left(\bar u_{j+k+1}-\bar u_{j+k}\right).
+\label{eq:linearsch}
 \end{equation}
 It is a scheme of $2J+1$ grid elements, $\bar u_j$ means grid
 average on $[x_{\jmh}, x_\jph]$, and $f_\jph$ is numerical flux in the
@@ -584,15 +587,15 @@ grid average instead of nodal value. Denote the antiderivative of
 $u(x,t)$ as $V(x,t)$, and $V_\jph = V(x_\jph,t)$, then according to
 definition of grid average:
 \begin{equation}
-  \bar u_{j+k}=\frac{V_{j+k+1/2}-V_{j+k-1/2}}{\Delta x}.
-  \label{eq:ujkV}
+\bar u_{j+k}=\frac{V_{j+k+1/2}-V_{j+k-1/2}}{\Delta x}.
+\label{eq:ujkV}
 \end{equation}
 Substituting the above equation to Eq.~(\ref{eq:linearsch}), we have 
 \begin{equation}
-  \frac{d}{dt}\left(\frac{V_{\jph}-V_{\jmh}}{\Delta x}\right)=\sum_{k=-J}^{J-1}\alpha_k\frac{V_{j+k+\frac{3}{2}}-2V_{j+k+1/2}+V_{j+k-\frac{1}{2}}}{\Delta x}.
-  \label{eq:linearschV}
+\frac{d}{dt}\left(\frac{V_{\jph}-V_{\jmh}}{\Delta x}\right)=\sum_{k=-J}^{J-1}\alpha_k\frac{V_{j+k+\frac{3}{2}}-2V_{j+k+1/2}+V_{j+k-\frac{1}{2}}}{\Delta x}.
+\label{eq:linearschV}
 \end{equation}
-The modified equation of Eq.~(\ref{eq:linearsch}) can be deduced by
+The mPDE of Eq.~(\ref{eq:linearsch}) can be deduced by
 Eq.~(\ref{eq:linearschV}) based on Taylor's expansion of $V_{j+k+\frac 12}$.
 
 \subsubsection{Construction of QUICK Scheme} \label{sec:construct-quick}
@@ -610,8 +613,8 @@ which leads to a new scheme different from the previous one.
 Integrate Eq.~(\ref{eq:conservative-convection}) over 
 interval $[x_\jmh, x_\jph]$ containing point $x_j$, we have
 \begin{equation}
-  \frac{d \overline{u}_j}{d t}+\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0,
-  \label{wave-conix}
+\frac{d \overline{u}_j}{d t}+\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0,
+\label{wave-conix}
 \end{equation}
 while $\bar u_j$ is grid average of $u(x,t)$ on interval $(x_\jmh,x_\jph)$
 defined by Eq.~(\ref{eq:def_grid_avg}). Eq.~(\ref{wave-conix}) is an accurate
@@ -619,31 +622,31 @@ expression, but the interface flux $f_\jph$ should be approximated by $\bar
 u_j$. 
 
 \begin{figure}[htb]
-  \begin{center}
-    \unitlength=1mm
-    \begin{picture}(120,25)
-      \thicklines
-      \put(20,0){\line(1,0){80}}
-      \put(20,12){\color{cyan}\line(1,0){60}}
-      \put(40,19){\color{green}\line(1,0){60}}
-      \put(50, 0.2){\line(1,0){20}}
-      \put(50,-0.2){\line(1,0){20}}
-      \thinlines
-      \multiput(20,0)(20,0){5}{\color{blue}\line(0,1){25}}
-      \multiput(30,0)(20,0){4}{\cb{$\bullet$}}\put(17,0){\cb{$S_0$}}
-      \multiput(30,12)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(17,12){\cb{\color{cyan}$S_\ell$}}
-      \multiput(50,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(103,19){\color{green}\cb{$S_r$}}
-      \put( 30,4){\cb{$x_{j-1}$}}
-      \put( 50,4){\cb{$x_j$}}
-      \put( 70,4){\cb{$x_{j+1}$}}
-      \put( 90,4){\cb{$x_{j+2}$}}
-      \put( 60,-3){\cb{\color{red}$x_{\jph}$}}
-      \thicklines
-      \put(60,0){\color{red}\line(0,1){25}}
-    \end{picture}
-  \end{center}
-  \caption{The sets on which interpolation of QUICK is operated: $S_\ell=\{\bar u_{j-1}, \bar u_j,\bar u_{j+1}\}$, $S_r = \{\bar u_j, \bar u_{j+1}, \bar u_{j+2} \}$, and $S_0=\{\bar u_{j-1}, \bar u_j,\bar u_{j+1}, \bar u_{j+2} \}$.}
-  \label{fig:QUICK-S}
+\begin{center}
+\unitlength=1mm
+\begin{picture}(120,25)
+\thicklines
+\put(20,0){\line(1,0){80}}
+\put(20,12){\color{cyan}\line(1,0){60}}
+\put(40,19){\color{green}\line(1,0){60}}
+\put(50, 0.2){\line(1,0){20}}
+\put(50,-0.2){\line(1,0){20}}
+\thinlines
+\multiput(20,0)(20,0){5}{\color{blue}\line(0,1){25}}
+\multiput(30,0)(20,0){4}{\cb{$\bullet$}}\put(17,0){\cb{$S_0$}}
+\multiput(30,12)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(17,12){\cb{\color{cyan}$S_\ell$}}
+\multiput(50,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(103,19){\color{green}\cb{$S_r$}}
+\put( 30,4){\cb{$x_{j-1}$}}
+\put( 50,4){\cb{$x_j$}}
+\put( 70,4){\cb{$x_{j+1}$}}
+\put( 90,4){\cb{$x_{j+2}$}}
+\put( 60,-3){\cb{\color{red}$x_{\jph}$}}
+\thicklines
+\put(60,0){\color{red}\line(0,1){25}}
+\end{picture}
+\end{center}
+\caption{The sets on which interpolation of QUICK is operated: $S_\ell=\{\bar u_{j-1}, \bar u_j,\bar u_{j+1}\}$, $S_r = \{\bar u_j, \bar u_{j+1}, \bar u_{j+2} \}$, and $S_0=\{\bar u_{j-1}, \bar u_j,\bar u_{j+1}, \bar u_{j+2} \}$.}
+\label{fig:QUICK-S}
 \end{figure}
 
 In order to obtain value of a particular function on point $x_\jph$, a 
@@ -657,20 +660,20 @@ construct third-order interpolant. The second-order interpolant in QUICK scheme
 can be expressed as (assuming that 
 the origin of coordinate is at interface $x_\jph = 0$):
 \begin{equation*}
-  p(x) = C_0 + C_1 x + C_2 x^2.
+p(x) = C_0 + C_1 x + C_2 x^2.
 \end{equation*}
 Obviously $C_0$ is the value on interface as $x_\jph=0$. Given average on
 interval $[x_a, x_b]$, we have
 \begin{equation*}
-  \bar u  =C_0+\frac{1}{2}C_1(x_a+x_b)+\frac{1}{3}C_2(x_a^2+x_ax_b+x_b^2).
+\bar u  =C_0+\frac{1}{2}C_1(x_a+x_b)+\frac{1}{3}C_2(x_a^2+x_ax_b+x_b^2).
 \end{equation*}
 While $a>0$, we construct interpolant on set $S_\ell$, and obtain the equations
 on coefficients of interpolant:
 \[
 \Matrix{\begin{array}{crr}
-    1 & -\frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 \\
-    1 & -\frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 \\
-    1 &  \frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 \\
+1 & -\frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 \\
+1 & -\frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 \\
+1 &  \frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 \\
 \end{array}}
 \Matrix{\begin{array}{c} C_0 \\ C_1 \\ C_2 \\ \end{array}} =
 \Matrix{\begin{array}{l} \bar u_{j-1} \\ \bar u_j \\ \bar u_{j+1} \\ \end{array}},
@@ -693,14 +696,14 @@ u_j+\bar u_{j+1})-\frac{1}{6}(\bar u_{j-1}-2\bar u_j+\bar u_{j+1});\]
 similarly, when $a<0$ we can deduce the corresponding expression on set
 $S_r$. The final result is
 \begin{equation}
-  u_{j+1/2}=\left\{\begin{array}{ll}
-  \displaystyle
-  \frac{1}{2}(\bar u_j+\bar u_{j+1})-\frac{1}{6}(\bar u_{j-1}-2\bar u_j+\bar u_{j+1}),\hspace{1cm} & a>0;\\[3mm]
-  \displaystyle
-  \frac{1}{2}(\bar u_j+\bar u_{j+1})-\frac{1}{6}(\bar u_j-2\bar
-  u_{j+1}+\bar u_{j+2}),\hspace{1cm} & a\leq 0.\\
-  \end{array}\right.
-  \label{eq:QUICK-flux}
+u_{j+1/2}=\left\{\begin{array}{ll}
+\displaystyle
+\frac{1}{2}(\bar u_j+\bar u_{j+1})-\frac{1}{6}(\bar u_{j-1}-2\bar u_j+\bar u_{j+1}),\hspace{1cm} & a>0;\\[3mm]
+\displaystyle
+\frac{1}{2}(\bar u_j+\bar u_{j+1})-\frac{1}{6}(\bar u_j-2\bar
+u_{j+1}+\bar u_{j+2}),\hspace{1cm} & a\leq 0.\\
+\end{array}\right.
+\label{eq:QUICK-flux}
 \end{equation}
 Eq.~(\ref{eq:QUICK-flux}) has similar form but different coefficients compared
 with literature \cite{leonard1979stable} as is shown in
@@ -709,37 +712,38 @@ instead of $1/6$.
 Eq.~(\ref{eq:QUICK-flux}) can be rewritten as fourth-order central scheme with
 correction term
 \begin{equation}
-  u_{j+1/2}=\left\{\begin{array}{ll}
-  \displaystyle
-  \frac{7}{12}(\bar u_j+\bar u_{j+1})-\frac{1}{12}(\bar u_{j-1}+\bar u_{j+2}){\color{red}+\frac{1}{12}\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar u_{j}-\bar u_{j-1} \right)}     ,\hspace{2mm} & a>0;\\[3mm]
-  \displaystyle
-  \frac{7}{12}(\bar u_j+\bar u_{j+1})-\frac{1}{12}(\bar u_{j-1}+\bar
-  u_{j+2}){\color{red}-\frac{1}{12}\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar
-    u_{j}-\bar u_{j-1} \right)}     ,\hspace{2mm} & a\leq 0.\\
-  \end{array}\right.
-  \label{eq:QUICK-flux-2}
+u_{j+1/2}=\left\{\begin{array}{ll}
+\displaystyle
+\frac{7}{12}(\bar u_j+\bar u_{j+1})-\frac{1}{12}(\bar u_{j-1}+\bar u_{j+2}){\color{red}+\frac{1}{12}\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar u_{j}-\bar u_{j-1} \right)}     ,\hspace{2mm} & a>0;\\[3mm]
+\displaystyle
+\frac{7}{12}(\bar u_j+\bar u_{j+1})-\frac{1}{12}(\bar u_{j-1}+\bar
+u_{j+2}){\color{red}-\frac{1}{12}\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar
+u_{j}-\bar u_{j-1} \right)}     ,\hspace{2mm} & a\leq 0.\\
+\end{array}
+\right.
+\label{eq:QUICK-flux-2}
 \end{equation}
 Denoting $\kappa = \sgn a$ and defining $\bar f_j = f(\bar u_j) = a\bar u_j$, we
 have the flux form of Eq.~(\ref{eq:QUICK-flux-2})
 \begin{equation}
-  f_{j+1/2}=
-  \frac{7}{12}(\bar f_j+\bar f_{j+1})-\frac{1}{12}(\bar f_{j-1}+\bar
-  f_{j+2}){\color{red}+\frac{1}{12}\kappa a\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar
-    u_{j}-\bar u_{j-1} \right)}.
-  \label{eq:QUICK-flux-3}
+f_{j+1/2}=
+\frac{7}{12}(\bar f_j+\bar f_{j+1})-\frac{1}{12}(\bar f_{j-1}+\bar
+f_{j+2}){\color{red}+\frac{1}{12}\kappa a\left(\bar u_{j+2}-3\bar u_{j+1}+3\bar
+u_{j}-\bar u_{j-1} \right)}.
+\label{eq:QUICK-flux-3}
 \end{equation}
 The correction term can be analyzed with antiderivative of $u(x,t)$; rewrite
 correction terms with Eq.~(\ref{eq:def_grid_avg}): 
 \begin{equation*}
-  \begin{array}{ll}
-    \bar u_{j+2}-3\bar u_{j+1}+3\bar u_{j}-\bar u_{j-1}&
-    \displaystyle =\frac{1}{\Delta x}
-    \left(V_{j+5/2}-4V_{j+3/2}+6V_{j+1/2}-4V_{j-1/2}+V_{j-3/2}\right) \\[3mm]
-    &\displaystyle
-    =\frac{\partial^4 V}{\partial x^4}\Delta x^3+\frac{1}{6}\frac{\partial^6V}{\partial x^6}\Delta x^5 + \cdots \\[3mm]
-    &\displaystyle
-    =\frac{\partial^3 u}{\partial x^3}\Delta x^3+\frac{1}{6}\frac{\partial^5u}{\partial x^5}\Delta x^5 + \cdots \\
-  \end{array}
+\begin{array}{ll}
+\bar u_{j+2}-3\bar u_{j+1}+3\bar u_{j}-\bar u_{j-1}&
+\displaystyle =\frac{1}{\Delta x}
+\left(V_{j+5/2}-4V_{j+3/2}+6V_{j+1/2}-4V_{j-1/2}+V_{j-3/2}\right) \\[3mm]
+&\displaystyle
+=\frac{\partial^4 V}{\partial x^4}\Delta x^3+\frac{1}{6}\frac{\partial^6V}{\partial x^6}\Delta x^5 + \cdots \\[3mm]
+&\displaystyle
+=\frac{\partial^3 u}{\partial x^3}\Delta x^3+\frac{1}{6}\frac{\partial^5u}{\partial x^5}\Delta x^5 + \cdots \\
+\end{array}
 \end{equation*}
 The partial derivatives in the above equation are at point $x_\jph$. In
 Eq.~(\ref{eq:QUICK-flux-2}) by definition of $\kappa$, $\kappa=1$ corresponds to
@@ -750,19 +754,19 @@ Substitute the flux given by Eq.~(\ref{eq:QUICK-flux-3}) into
 Eq~(\ref{wave-conix}), and rewrite the scheme into form of
 Eq.~(\ref{eq:linearsch}); in this case, we have $J = 2$ and
 \begin{equation}
-  \left\{\begin{array}{ll}
-  \alpha_{-2}&\displaystyle =\ \ \frac{1}{12\Delta x}(1+\kappa)a,\\[3mm]
-  \alpha_{-1}&\displaystyle = -\frac{1}{12\Delta x}(7+3\kappa)a,\\[3mm]
-  \alpha_{0}&\displaystyle = -\frac{1}{12\Delta x}(7-3\kappa)a,\\[3mm]
-  \alpha_{1}&\displaystyle =\ \ \frac{1}{12\Delta x}(1-\kappa)a.\\
-  \end{array}\right.
-  \label{eq:coeff-of-alpha-in-quick}
+\left\{\begin{array}{ll}
+\alpha_{-2}&\displaystyle =\ \ \frac{1}{12\Delta x}(1+\kappa)a,\\[3mm]
+\alpha_{-1}&\displaystyle = -\frac{1}{12\Delta x}(7+3\kappa)a,\\[3mm]
+\alpha_{0}&\displaystyle = -\frac{1}{12\Delta x}(7-3\kappa)a,\\[3mm]
+\alpha_{1}&\displaystyle =\ \ \frac{1}{12\Delta x}(1-\kappa)a.\\
+\end{array}\right.
+\label{eq:coeff-of-alpha-in-quick}
 \end{equation}
 The coefficients given above can be applied to Eq.~(\ref{eq:linearschV})
-and the modified equation is obtained:
+and the mPDE is obtained:
 \begin{equation}
-  u_t+au_x =-\frac{1}{12}\kappa a \Delta x^3 u_{xxxx}+\frac{1}{30}a \Delta x^4 u_{xxxxx} -\frac{1}{72} \kappa a \Delta x^5 u_{xxxxxx} +\cdots
-  \label{eq:modified-quick}
+u_t+au_x =-\frac{1}{12}\kappa a \Delta x^3 u_{xxxx}+\frac{1}{30}a \Delta x^4 u_{xxxxx} -\frac{1}{72} \kappa a \Delta x^5 u_{xxxxxx} +\cdots
+\label{eq:modified-quick}
 \end{equation}
 The leading term of truncation error in the above equation is a fourth-order
 one, which implies that the scheme is third-order accurate.
@@ -773,156 +777,156 @@ one, which implies that the scheme is third-order accurate.
 A third-order polynomial can be constructed given set $S_0$ shown in
 Fig.~\ref{fig:QUICK-S}:
 \begin{equation*}
-  p(x) = C_0 + C_1 x + C_2 x^2 + C_3 x^3.
+p(x) = C_0 + C_1 x + C_2 x^2 + C_3 x^3.
 \end{equation*}
 Setting point $x_\jph$ as the origin of coordinate, the equations of
 coefficients to be determined are:
 \begin{equation*}
-  \Matrix{\begin{array}{crrr}
-      1 & -\frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 & -\frac{15}{4}\Delta x^3 \\
-      1 & -\frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 & -\frac{1}{4}\Delta x^3 \\
-      1 & \frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 & \frac{1}{4}\Delta x^3 \\
-      1 & \frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 & \frac{15}{4}\Delta x^3 \\
-  \end{array}}
-  =\Matrix{\begin{array}{l}
-      \bar u_{j-1}\\ \bar u_{j} \\ \bar u_{j+1} \\ \bar u_{j+2} \\
-  \end{array}}.
+\Matrix{\begin{array}{crrr}
+1 & -\frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 & -\frac{15}{4}\Delta x^3 \\
+1 & -\frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 & -\frac{1}{4}\Delta x^3 \\
+1 & \frac{1}{2}\Delta x & \frac{1}{3}\Delta x^2 & \frac{1}{4}\Delta x^3 \\
+1 & \frac{3}{2}\Delta x & \frac{7}{3}\Delta x^2 & \frac{15}{4}\Delta x^3 \\
+\end{array}}
+=\Matrix{\begin{array}{l}
+\bar u_{j-1}\\ \bar u_{j} \\ \bar u_{j+1} \\ \bar u_{j+2} \\
+\end{array}}.
 \end{equation*}
 The determinant of the coefficient matrix is $D = 12\Delta x^6$, so there exists
 unique solution
 \begin{equation*}
-  \left\{\begin{array}{l}
-  \displaystyle
-  C_0 = \frac{1}{12}\left[7(\bar u_j+\bar u_{j+1})-(\bar u_{j-1}+\bar u_{j+2})\right],\\[3mm]
-  \displaystyle
-  C_1= \frac{1}{12\Delta x}\left[15(\bar u_{j+1}-\bar u_{j-1})-(\bar u_{j+2}-\bar u_{j-1})\right],\\[3mm]
-  \displaystyle
-  C_2 = -\frac{1}{4\Delta x^2}\left[(\bar u_j+\bar u_{j+1})-(\bar u_{j-1}+\bar u_{j+2})\right],\\[3mm]
-  \displaystyle
-  C_3= -\frac{1}{6\Delta x^3}\left[3(\bar u_{j+1}-\bar u_{j-1})-(\bar u_{j+2}-\bar u_{j-1})\right].\\
-  \end{array}\right.
+\left\{\begin{array}{l}
+\displaystyle
+C_0 = \frac{1}{12}\left[7(\bar u_j+\bar u_{j+1})-(\bar u_{j-1}+\bar u_{j+2})\right],\\[3mm]
+\displaystyle
+C_1= \frac{1}{12\Delta x}\left[15(\bar u_{j+1}-\bar u_{j-1})-(\bar u_{j+2}-\bar u_{j-1})\right],\\[3mm]
+\displaystyle
+C_2 = -\frac{1}{4\Delta x^2}\left[(\bar u_j+\bar u_{j+1})-(\bar u_{j-1}+\bar u_{j+2})\right],\\[3mm]
+\displaystyle
+C_3= -\frac{1}{6\Delta x^3}\left[3(\bar u_{j+1}-\bar u_{j-1})-(\bar u_{j+2}-\bar u_{j-1})\right].\\
+\end{array}\right.
 \end{equation*}
 The interpolation coefficients based on set 
 $S_\ell$ are
 \begin{equation*}
-  \left\{\begin{array}{l}
-  \displaystyle
-  C_0 = \frac{1}{6}(-\bar u_{j-1}+5\bar u_j+2\bar u_{j+1}),\\[3mm]
-  \displaystyle
-  C_1= \frac{1}{\Delta x}(\bar u_{j+1}-\bar u_{j}),\\[3mm]
-  \displaystyle
-  C_2 = \frac{1}{2\Delta x^2}(\bar u_{j-1}-2\bar u_j+\bar u_{j+1});\\[3mm]
-  \end{array}\right.
+\left\{\begin{array}{l}
+\displaystyle
+C_0 = \frac{1}{6}(-\bar u_{j-1}+5\bar u_j+2\bar u_{j+1}),\\[3mm]
+\displaystyle
+C_1= \frac{1}{\Delta x}(\bar u_{j+1}-\bar u_{j}),\\[3mm]
+\displaystyle
+C_2 = \frac{1}{2\Delta x^2}(\bar u_{j-1}-2\bar u_j+\bar u_{j+1});\\[3mm]
+\end{array}\right.
 \end{equation*}
 The interpolation coefficients based on set $S_r$ are
 \begin{equation*}
-  \left\{\begin{array}{l}
-  \displaystyle
-  C_0 = \frac{1}{6}(2\bar u_{j}+5\bar u_{j+1}-\bar u_{j+2}),\\[3mm]
-  \displaystyle
-  C_1= \frac{1}{\Delta x}(\bar u_{j+1}-\bar u_{j}),\\[3mm]
-  \displaystyle
-  C_2 = \frac{1}{2\Delta x^2}(\bar u_{j}-2\bar u_{j+1}+\bar u_{j+2}).\\[3mm]
-  \end{array}\right.
+\left\{\begin{array}{l}
+\displaystyle
+C_0 = \frac{1}{6}(2\bar u_{j}+5\bar u_{j+1}-\bar u_{j+2}),\\[3mm]
+\displaystyle
+C_1= \frac{1}{\Delta x}(\bar u_{j+1}-\bar u_{j}),\\[3mm]
+\displaystyle
+C_2 = \frac{1}{2\Delta x^2}(\bar u_{j}-2\bar u_{j+1}+\bar u_{j+2}).\\[3mm]
+\end{array}\right.
 \end{equation*}
 Let superscript ``$(3)$'' and ``$(4)$'' denote the coefficients of the second
 and third-order interpolation polynomial:
 \begin{equation}
-  \left\{\begin{array}{l}
-  \displaystyle
-  C_0^{(3)}=C_0^{(4)}+\frac{1}{2}\kappa C_3^{(4)}\Delta x^3, \\[3mm]
-  \displaystyle
-  C_1^{(3)}=C_1^{(4)}+\frac{1}{2}\abs{\kappa} C_3^{(4)}\Delta x^2, \\[3mm]
-  \displaystyle
-  C_2^{(3)}=C_2^{(4)}-\frac{3}{2}\kappa C_3^{(4)}\Delta x, \\
-  \end{array}\right.
-  \label{eq:ave-C-34}
+\left\{\begin{array}{l}
+\displaystyle
+C_0^{(3)}=C_0^{(4)}+\frac{1}{2}\kappa C_3^{(4)}\Delta x^3, \\[3mm]
+\displaystyle
+C_1^{(3)}=C_1^{(4)}+\frac{1}{2}\abs{\kappa} C_3^{(4)}\Delta x^2, \\[3mm]
+\displaystyle
+C_2^{(3)}=C_2^{(4)}-\frac{3}{2}\kappa C_3^{(4)}\Delta x, \\
+\end{array}\right.
+\label{eq:ave-C-34}
 \end{equation}
 $\kappa = 1$ for $S_\ell$ and $\kappa = -1$ for $S_r$. It is worthwhile pointing
 out that $C_1^{(3)}$ is not dependent on parameter $\kappa$ which means that it
 is independent of deflection of base set. The expression $|\kappa|$ is used to
 ensure that the whole formula corresponds to base set $S_0$ when $\kappa=0$. The
-mathematical definition of $\kappa$ is $\kappa = \mathrm{sgn} a = a/|a|$, but
+mathematical definition of $\kappa$ is $\kappa = \sgn a = a/|a|$, but
 in order to avoid situation where zero is divided, we can redefine $\kappa$ as
 \begin{equation*}
-  \kappa =\frac{a}{Q(a)},\hspace{1cm}Q(x) = \left\{\begin{array}{ll} \abs{x}, & \abs{x}\ge \varepsilon \\
-  \varepsilon, & \abs{x} < \varepsilon \\
-  \end{array}\right.\hspace{5mm}\mbox{or}\hspace{5mm}
-  \left\{\begin{array}{ll} \abs{x}, & \abs{x}\ge \varepsilon \\
-  \frac{x^2+\varepsilon^2}{2\varepsilon}, & \abs{x} < \varepsilon \\ \end{array}\right.
+\kappa =\frac{a}{Q(a)},\hspace{1cm}Q(x) = \left\{\begin{array}{ll} \abs{x}, & \abs{x}\ge \varepsilon \\
+\varepsilon, & \abs{x} < \varepsilon \\
+\end{array}\right.\hspace{5mm}\mbox{or}\hspace{5mm}
+\left\{\begin{array}{ll} \abs{x}, & \abs{x}\ge \varepsilon \\
+\frac{x^2+\varepsilon^2}{2\varepsilon}, & \abs{x} < \varepsilon \\ \end{array}\right.
 \end{equation*}
 
 The property of coefficients given by Eq.~(\ref{eq:ave-C-34}) can be
 generalized.
 Given averages on $m$ intervals:
 \begin{equation}
-  \frac{1}{x_{j+1}-x_j}\int_{x_j}^{x_{j+1}}u(x)dx=\bar
-  u_j,\hspace{1cm}j=1,2,\cdots,m,
-  \label{eq:ave-uj-m}
+\frac{1}{x_{j+1}-x_j}\int_{x_j}^{x_{j+1}}u(x)dx=\bar
+u_j,\hspace{1cm}j=1,2,\cdots,m,
+\label{eq:ave-uj-m}
 \end{equation}
 a $(m-1)$th-order polynomial can be constructed as there are $m$ constrains:
 \begin{equation}
-  p_{m-1}(x) = C_0^{(m)}+C_1^{(m)}x + \cdots +C_{m-1}^{(m)}x^{m-1}.
-  \label{eq:p-m1-x}
+p_{m-1}(x) = C_0^{(m)}+C_1^{(m)}x + \cdots +C_{m-1}^{(m)}x^{m-1}.
+\label{eq:p-m1-x}
 \end{equation}
 Substituting $u(x) = p_{m-1}(x)$ into Eq.~(\ref{eq:ave-uj-m}), we obtain
 \begin{equation}
-  C_0^{(m)}+\frac{1}{2}\frac{x_{j+1}^2-x_j^2}{x_{j+1}-x_j}C_1^{(m)}+\frac{1}{3}\frac{x_{j+1}^3-x_j^3}{x_{j+1}-x_j}C_2^{(m)}+\cdots+\frac{1}{m}\frac{x_{j+1}^m-x_j^m}{x_{j+1}-x_j}C_{m-1}^{(m)} =\bar u_j.
-  \label{eq:ave-uj-C}
+C_0^{(m)}+\frac{1}{2}\frac{x_{j+1}^2-x_j^2}{x_{j+1}-x_j}C_1^{(m)}+\frac{1}{3}\frac{x_{j+1}^3-x_j^3}{x_{j+1}-x_j}C_2^{(m)}+\cdots+\frac{1}{m}\frac{x_{j+1}^m-x_j^m}{x_{j+1}-x_j}C_{m-1}^{(m)} =\bar u_j.
+\label{eq:ave-uj-C}
 \end{equation}
 While $j=1,2,\ldots,m$, a linear equation about 
 $ \bm C^{(m)}=(C_0^{(m)},C_1^{(m)},\cdots,C_{m-1}^{(m)})$ is 
 \begin{equation}
-  W^{(m)}\bm C^{(m)}=\bm R^{(m)},
-  \label{eq:WC=R}
+W^{(m)}\bm C^{(m)}=\bm R^{(m)},
+\label{eq:WC=R}
 \end{equation}
 and the coefficient matrix and the left hand side term is
 \begin{equation*}
-  W^{(m)}\equiv\Matrix{\begin{array}{ccccc}
-      1& \frac{1}{2}\frac{x_{2}^2-x_1^2}{x_{2}-x_1} &\frac{1}{3}\frac{x_{2}^3-x_1^3}{x_{2}-x_1} & \cdots & \frac{1}{m}\frac{x_{2}^m-x_1^m}{x_{2}-x_1} \\[3mm]
-      1& \frac{1}{2}\frac{x_{3}^2-x_2^2}{x_{3}-x_2} &\frac{1}{3}\frac{x_{3}^3-x_2^3}{x_{3}-x_2} & \cdots & \frac{1}{m}\frac{x_{3}^m-x_2^m}{x_{3}-x_2} \\
-      \cdots &\cdots &\cdots &\cdots &\cdots \\
-      1& \frac{1}{2}\frac{x_{m+1}^2-x_m^2}{x_{m+1}-x_m} &\frac{1}{3}\frac{x_{m+1}^3-x_m^3}{x_{m+1}-x_m} & \cdots & \frac{1}{m}\frac{x_{m+1}^m-x_m^m}{x_{m+1}-x_m} \\
-  \end{array}},\hspace{5mm}
-  \bm R^{(m)}=\Matrix{\begin{array}{c}\bar u_1\\ \bar u_2\\ \vdots\\ \bar u_m\\ \end{array}}.
+W^{(m)}\equiv\Matrix{\begin{array}{ccccc}
+1& \frac{1}{2}\frac{x_{2}^2-x_1^2}{x_{2}-x_1} &\frac{1}{3}\frac{x_{2}^3-x_1^3}{x_{2}-x_1} & \cdots & \frac{1}{m}\frac{x_{2}^m-x_1^m}{x_{2}-x_1} \\[3mm]
+1& \frac{1}{2}\frac{x_{3}^2-x_2^2}{x_{3}-x_2} &\frac{1}{3}\frac{x_{3}^3-x_2^3}{x_{3}-x_2} & \cdots & \frac{1}{m}\frac{x_{3}^m-x_2^m}{x_{3}-x_2} \\
+\cdots &\cdots &\cdots &\cdots &\cdots \\
+1& \frac{1}{2}\frac{x_{m+1}^2-x_m^2}{x_{m+1}-x_m} &\frac{1}{3}\frac{x_{m+1}^3-x_m^3}{x_{m+1}-x_m} & \cdots & \frac{1}{m}\frac{x_{m+1}^m-x_m^m}{x_{m+1}-x_m} \\
+\end{array}},\hspace{5mm}
+\bm R^{(m)}=\Matrix{\begin{array}{c}\bar u_1\\ \bar u_2\\ \vdots\\ \bar u_m\\ \end{array}}.
 \end{equation*}
 The determinant of coefficient matrix $W^{(m)}$ is
 \begin{equation*}
-  \abs{W^{(m)}}=\frac{1}{\displaystyle m!\prod_{k=1}^m(x_{k+1}-x_k)}\abs{
-    \begin{array}{ccccc}
-      x_2-x_1 & x_2^2-x_1^2 & x_2^3-x_1^3 & \cdots & x_2^m-x_1^m \\[3mm]
-      x_3-x_2 & x_3^2-x_2^2 & x_3^3-x_2^3 & \cdots & x_3^m-x_2^m \\
-      \cdots &\cdots &\cdots &\cdots &\cdots \\
-      x_{m+1}-x_m & x_{m+1}^2-x_m^2 & x_{m+1}^3-x_m^3 & \cdots & x_{m+1}^m-x_m^m
-    \end{array}
-  },
+\abs{W^{(m)}}=\frac{1}{\displaystyle m!\prod_{k=1}^m(x_{k+1}-x_k)}\abs{
+\begin{array}{ccccc}
+x_2-x_1 & x_2^2-x_1^2 & x_2^3-x_1^3 & \cdots & x_2^m-x_1^m \\[3mm]
+x_3-x_2 & x_3^2-x_2^2 & x_3^3-x_2^3 & \cdots & x_3^m-x_2^m \\
+\cdots &\cdots &\cdots &\cdots &\cdots \\
+x_{m+1}-x_m & x_{m+1}^2-x_m^2 & x_{m+1}^3-x_m^3 & \cdots & x_{m+1}^m-x_m^m
+\end{array}
+},
 \end{equation*}
 and it can be deduced that\footnote{The proof is as following. Adding one row
-  onto the determinant as the first row and one column as the first column. The
-  added row is $(1, x_1, x_1^2, x_1^3, \ldots, x_1^m)$, and the added column
-  consists of zeros except that first element is $1$. The new determinant is a
-  $(m+1)$th-order one; adding each row onto the next, we attain a standard
-  $(m+1)$th-order Vandermonde determinant.}
+onto the determinant as the first row and one column as the first column. The
+added row is $(1, x_1, x_1^2, x_1^3, \ldots, x_1^m)$, and the added column
+consists of zeros except that first element is $1$. The new determinant is a
+$(m+1)$th-order one; adding each row onto the next, we attain a standard
+$(m+1)$th-order Vandermonde determinant.}
 \begin{equation}
-  \abs{\begin{array}{ccccc}
-      x_2-x_1 & x_2^2-x_1^2 & x_2^3-x_1^3 & \cdots & x_2^m-x_1^m \\[3mm]
-      x_3-x_2 & x_3^2-x_2^2 & x_3^3-x_2^3 & \cdots & x_3^m-x_2^m \\
-      \cdots &\cdots &\cdots &\cdots &\cdots \\
-      x_{m+1}-x_m & x_{m+1}^2-x_m^2 & x_{m+1}^3-x_m^3 & \cdots & x_{m+1}^m-x_m^m 
-  \end{array} }=\prod_{i_1<i_2}(x_{i_2}-x_{i_1}).
-  \label{eq:Vande2}
+\abs{\begin{array}{ccccc}
+x_2-x_1 & x_2^2-x_1^2 & x_2^3-x_1^3 & \cdots & x_2^m-x_1^m \\[3mm]
+x_3-x_2 & x_3^2-x_2^2 & x_3^3-x_2^3 & \cdots & x_3^m-x_2^m \\
+\cdots &\cdots &\cdots &\cdots &\cdots \\
+x_{m+1}-x_m & x_{m+1}^2-x_m^2 & x_{m+1}^3-x_m^3 & \cdots & x_{m+1}^m-x_m^m 
+\end{array} }=\prod_{i_1<i_2}(x_{i_2}-x_{i_1}).
+\label{eq:Vande2}
 \end{equation}
 The total number of terms in the RHS is $C_{m+1}^2 = \frac{m(m+1)}{2}$. Given
 $\forall k, x_k \neq x_{k+1}$, we have
 \begin{equation*}
-  \abs{W^{(m)}} = \frac{1}{m!}\prod_{i_1+1<i_2}(x_{i_2}-x_{i_1}),
+\abs{W^{(m)}} = \frac{1}{m!}\prod_{i_1+1<i_2}(x_{i_2}-x_{i_1}),
 \end{equation*}
 so the $m$th-order equations about $(C_0, C_1, \ldots, C_{m-1}$ has unique
 solution. Then we consider two sets of equations about $\bm C^{(n)}$ and
 $\bm C^{(n-1)}$ respectively:
 \begin{equation}
-  W^{(n)}\bm C^{(n)}=\bm R^{(n)},\hspace{1cm}W^{(n-1)}\bm C^{(n-1)}=\bm R^{(n-1)}.
-  \label{eq:C-n-C-n1}
+W^{(n)}\bm C^{(n)}=\bm R^{(n)},\hspace{1cm}W^{(n-1)}\bm C^{(n-1)}=\bm R^{(n-1)}.
+\label{eq:C-n-C-n1}
 \end{equation}
 In the equation above, matrix $W^{(n-1)}$ is submatrix of $W^{(n)}$ with the
 $n$th row and the $n$th column removed, and column vector $\bm R^{(n-1)}$
@@ -931,29 +935,29 @@ Denoting the first $(n-1)$ components of $\bm C^{(n)}$ as $\bm C_s^{(n-1)}$, the
 first equation of Eq.~(\ref{eq:C-n-C-n1}) can be rewritten in the block matrix
 form:
 \begin{equation}
-  \Matrix{\begin{array}{cc}
-      W^{(n-1)} & \bm x^{(n)}_s \\ \times & \frac{1}{n}\frac{x_{n+1}^n-x_1^n}{x_{n+1}-x_n} \\
-  \end{array}}
-  \Matrix{\begin{array}{c}\bm C^{(n)}_s \\ C^{(n)}_{n-1} \\ \end{array}} =
-  \Matrix{\begin{array}{c}\bm R^{(n-1)} \\ \bar u_{n} \\ \end{array}},
-  \label{eq:C-n-C-n1-block}
+\Matrix{\begin{array}{cc}
+W^{(n-1)} & \bm x^{(n)}_s \\ \times & \frac{1}{n}\frac{x_{n+1}^n-x_1^n}{x_{n+1}-x_n} \\
+\end{array}}
+\Matrix{\begin{array}{c}\bm C^{(n)}_s \\ C^{(n)}_{n-1} \\ \end{array}} =
+\Matrix{\begin{array}{c}\bm R^{(n-1)} \\ \bar u_{n} \\ \end{array}},
+\label{eq:C-n-C-n1-block}
 \end{equation}
 and $\bm x_s$ is a $(n-1)$-dimensional column vector of the last column of matrix
 $W^{(n)}$ without the last element:
 \[
-\a x_s^{(n)}=\left(\frac{1}{n}\frac{x_2^n-x_1^n}{x_2-x_1},\frac{1}{n}\frac{x_3^n-x_2^n}{x_3-x_2},\cdots,\frac{1}{n}\frac{x_{n}^n-x_{n-1}^n}{x_{n}-x_{n-1}}\right)^T.
+\bm x_s^{(n)}=\left(\frac{1}{n}\frac{x_2^n-x_1^n}{x_2-x_1},\frac{1}{n}\frac{x_3^n-x_2^n}{x_3-x_2},\cdots,\frac{1}{n}\frac{x_{n}^n-x_{n-1}^n}{x_{n}-x_{n-1}}\right)^T.
 \]
 According to Eq.~(\ref{eq:C-n-C-n1-block}), we have
 \begin{equation}
-  W^{(n-1)}\bm C^{(n)}_s + C^{(n)}_{n-1}\bm x_s^{(n)}=\bm R^{(n-1)}.
-  \label{eq:C-n-C-n1-sub}
+W^{(n-1)}\bm C^{(n)}_s + C^{(n)}_{n-1}\bm x_s^{(n)}=\bm R^{(n-1)}.
+\label{eq:C-n-C-n1-sub}
 \end{equation}
 Denoting the inverse matrix of $W^{(n-1)}$ as $\Lambda^{(n-1)}$ and combining
 Eq.~(\ref{eq:C-n-C-n1-sub}) and the first equation in Eq.~(\ref{eq:C-n-C-n1}), we
 have
 \begin{equation}
-  \bm C^{(n-1)}=\Lambda^{(n-1)}\bm R^{(n-1)}=\bm C^{(n)}_s + C^{(n)}_{n-1}\Lambda^{(n-1)}\bm x_s^{(n)}.
-  \label{eq:C-n-C-n1-gamma}
+\bm C^{(n-1)}=\Lambda^{(n-1)}\bm R^{(n-1)}=\bm C^{(n)}_s + C^{(n)}_{n-1}\Lambda^{(n-1)}\bm x_s^{(n)}.
+\label{eq:C-n-C-n1-gamma}
 \end{equation}
 An observation of Eq.~(\ref{eq:C-n-C-n1-gamma}) at $n=3$ is
 \[
@@ -970,16 +974,16 @@ and the case of $n=4$:
 One conjecture can be made that $\forall n$, $\Lambda^{(n-1)}\bm x_s^{(n)}$ is
 $(n-1)$-dimensional column vector:
 \begin{equation}
-  \Lambda^{(n-1)}\bm x_s^{(n)}=\Matrix{\begin{array}{r}
-      \displaystyle
-      -\frac{(-1)^{n-1}}{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\
-      \vdots\hspace{1cm} \\
-      \displaystyle
-      -\frac{n-2}{n}\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm]
-      \displaystyle
-      \frac{n-1}{n}\sum_{i=1}^n x_i \\
-  \end{array}}\equiv\bm s.
-  \label{eq:C-n-C-n1-s}
+\Lambda^{(n-1)}\bm x_s^{(n)}=\Matrix{\begin{array}{r}
+\displaystyle
+-\frac{(-1)^{n-1}}{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\
+\vdots\hspace{1cm} \\
+\displaystyle
+-\frac{n-2}{n}\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm]
+\displaystyle
+\frac{n-1}{n}\sum_{i=1}^n x_i \\
+\end{array}}\equiv\bm s.
+\label{eq:C-n-C-n1-s}
 \end{equation}
 Eq.~(\ref{eq:C-n-C-n1-s}) is proved rigorously in Appendix~\ref{sec:proof}.
 
@@ -988,65 +992,65 @@ Eq.~(\ref{eq:C-n-C-n1-s}) is proved rigorously in Appendix~\ref{sec:proof}.
 \subsubsection{Construction of QUICK Scheme}
 
 \begin{figure}[htb]
-  \begin{center}
-    \unitlength=1mm
-    \begin{picture}(120,25)
-      \thicklines
-      \put(10,0){\line(1,0){100}}
-      \put(40, 0.2){\color{cyan}\line(1,0){20}}
-      \put(40,-0.2){\color{cyan}\line(1,0){20}}
-      \put(60, 0.2){\color{green}\line(1,0){20}}
-      \put(60,-0.2){\color{green}\line(1,0){20}}
-      \put(50, 2.2){\line(1,0){20}}
-      \put(50, 2.0){\line(1,0){20}}
-      \put(50, 1.8){\line(1,0){20}}
-      \put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
-      \put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
-      \multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
-      \multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \put(55,6){\cb{$I_{j^-}^+$}}
-      \put(65,6){\cb{$I_{j^+}^+$}}
-      \put(60,-3){\cb{$x_j$}}
-      \thinlines
-      \put(10,15){\color{cyan}\line(1,0){60}}
-      \put(30,19){\color{green}\line(1,0){60}}
-      \multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
-      \multiput(20,0)(20,0){5}{\cb{$\bullet$}}
-      \multiput(20,15)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(7,15){\cb{\color{cyan}$S_\ell$}}
-      \multiput(40,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(27,19){\cb{\color{green}$S_\ell$}}
-      \put( 20,4){\cb{$x_{j-2}$}}
-      \put( 40,4){\cb{$x_{j-1}$}}
-      \put( 80,4){\cb{$x_{j+1}$}}
-      \put(100,4){\cb{$x_{j+2}$}}
-      \put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
-      \put( 70,-3){\cb{\color{green}$x_{\jph}$}}
-      \thicklines
-      \put(50,0){\color{cyan}\line(0,1){25}}
-      \put(70,0){\color{green}\line(0,1){25}}
-    \end{picture}
-  \end{center}
-  \caption{When $a>0$, the base set on which interpolation of QUICK Scheme
-    based on grid values is operated: $S_\ell=\{u_{j-2}, u_{j-1}, u_j\}$ for
-    $x_\jmh$, and $S_\ell=\{u_{j-1}, u_j, u_{j+1}\}$ for $x_\jph$.
-  } 
-  \label{fig:pQUICKfhStenL}
+\begin{center}
+\unitlength=1mm
+\begin{picture}(120,25)
+\thicklines
+\put(10,0){\line(1,0){100}}
+\put(40, 0.2){\color{cyan}\line(1,0){20}}
+\put(40,-0.2){\color{cyan}\line(1,0){20}}
+\put(60, 0.2){\color{green}\line(1,0){20}}
+\put(60,-0.2){\color{green}\line(1,0){20}}
+\put(50, 2.2){\line(1,0){20}}
+\put(50, 2.0){\line(1,0){20}}
+\put(50, 1.8){\line(1,0){20}}
+\put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
+\put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
+\multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
+\multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
+\multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
+\put(55,6){\cb{$I_{j^-}^+$}}
+\put(65,6){\cb{$I_{j^+}^+$}}
+\put(60,-3){\cb{$x_j$}}
+\thinlines
+\put(10,15){\color{cyan}\line(1,0){60}}
+\put(30,19){\color{green}\line(1,0){60}}
+\multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
+\multiput(20,0)(20,0){5}{\cb{$\bullet$}}
+\multiput(20,15)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(7,15){\cb{\color{cyan}$S_\ell$}}
+\multiput(40,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(27,19){\cb{\color{green}$S_\ell$}}
+\put( 20,4){\cb{$x_{j-2}$}}
+\put( 40,4){\cb{$x_{j-1}$}}
+\put( 80,4){\cb{$x_{j+1}$}}
+\put(100,4){\cb{$x_{j+2}$}}
+\put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
+\put( 70,-3){\cb{\color{green}$x_{\jph}$}}
+\thicklines
+\put(50,0){\color{cyan}\line(0,1){25}}
+\put(70,0){\color{green}\line(0,1){25}}
+\end{picture}
+\end{center}
+\caption{When $a>0$, the base set on which interpolation of QUICK Scheme
+based on grid values is operated: $S_\ell=\{u_{j-2}, u_{j-1}, u_j\}$ for
+$x_\jmh$, and $S_\ell=\{u_{j-1}, u_j, u_{j+1}\}$ for $x_\jph$.
+} 
+\label{fig:pQUICKfhStenL}
 \end{figure}
 
 If the data set is constrained to nodal value, the base set on which
@@ -1054,164 +1058,164 @@ interpolation is operated is shown in Fig.~\ref{fig:pQUICKfhStenL}. While
 $a>0$, the quadratic polynomial constructed with $S_r$ in
 Fig.~\ref{fig:pQUICKfhStenL} is
 \begin{equation*}
-  p(x) = C_0+C_1x+C_2x^2,\hspace{5mm} x\in [x_j,x_{j+1}]=\left[-\frac{1}{2}\Delta x,\frac{1}{2}\Delta x\right].
+p(x) = C_0+C_1x+C_2x^2,\hspace{5mm} x\in [x_j,x_{j+1}]=\left[-\frac{1}{2}\Delta x,\frac{1}{2}\Delta x\right].
 \end{equation*}
 The coefficients are
 \begin{equation*}
-  C_0=\frac{1}{8}(-u_{j-1}+6u_j+3u_{j+1}),\hspace{3mm}
-  C_1 = \frac{u_{j+1}-u_j}{\Delta x},\hspace{3mm}
-  C_2 = \frac{u_{j+1}-2u_j+u_{j-1}}{2\Delta x^2}.
+C_0=\frac{1}{8}(-u_{j-1}+6u_j+3u_{j+1}),\hspace{3mm}
+C_1 = \frac{u_{j+1}-u_j}{\Delta x},\hspace{3mm}
+C_2 = \frac{u_{j+1}-2u_j+u_{j-1}}{2\Delta x^2}.
 \end{equation*}
 The integral on interval $[x_j,x_{\jph}]=[-\Delta x/2,0]$ is
 \begin{equation*}
-  I^+_{j^+}\equiv\int_{-\frac{1}{2}\Delta x}^0 p(x)dx = \frac{1}{2}C_0\Delta x-\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3
-  =\frac{1}{24}(-u_{j-1}+11u_j+2u_{j+1})\Delta x;
+I^+_{j^+}\equiv\int_{-\frac{1}{2}\Delta x}^0 p(x)dx = \frac{1}{2}C_0\Delta x-\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3
+=\frac{1}{24}(-u_{j-1}+11u_j+2u_{j+1})\Delta x;
 \end{equation*}
 similarly the integral on interval $[x_{\jph},x_{j+1}]=[0,\Delta x/2]$ is
 \begin{equation*}
-  I^+_{j+1^-}\equiv\int_0^{\frac{1}{2}\Delta x} p(x)dx = \frac{1}{2}C_0\Delta x+\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3
-  =\frac{1}{24}(-u_{j-1}+5u_j+8u_{j+1})\Delta x.
+I^+_{j+1^-}\equiv\int_0^{\frac{1}{2}\Delta x} p(x)dx = \frac{1}{2}C_0\Delta x+\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3
+=\frac{1}{24}(-u_{j-1}+5u_j+8u_{j+1})\Delta x.
 \end{equation*}
 The integral on interval $[x_{\jmh},x_{\jph}]$ is
 \begin{equation*}
-  T_3^+\equiv I^+_{j^+}+I^+_{j^-} = \frac{\Delta x}{24}(-u_{j-2}+4u_{j-1}+19u_j+2u_{j+1}).
+T_3^+\equiv I^+_{j^+}+I^+_{j^-} = \frac{\Delta x}{24}(-u_{j-2}+4u_{j-1}+19u_j+2u_{j+1}).
 \end{equation*}
 Thus Eq.~(\ref{eq:QUICK-duj-dt}) is 
 \begin{equation}
-  \frac{1}{24}\left(-\frac{d u_{j-2}}{dt}+4\frac{du_{j-1}}{dt}+19\frac{du_j}{dt}+2\frac{du_{j+1}}{dt}\right)
-  +\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0.
-  \label{eq:intx1}
+\frac{1}{24}\left(-\frac{d u_{j-2}}{dt}+4\frac{du_{j-1}}{dt}+19\frac{du_j}{dt}+2\frac{du_{j+1}}{dt}\right)
++\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0.
+\label{eq:intx1}
 \end{equation}
 
 \begin{figure}[htb]
-  \begin{center}
-    \unitlength=1mm
-    \begin{picture}(120,25)
-      % \multiput(0,0)(5,0){25}{\color{red}\line(0,1){25}}
-      % \multiput(0,0)(0,5){6}{\color{red}\line(1,0){120}}
-      \thicklines
-      \put(10,0){\line(1,0){100}}
-      \put(40, 0.2){\color{cyan}\line(1,0){20}}
-      \put(40,-0.2){\color{cyan}\line(1,0){20}}
-      \put(60, 0.2){\color{green}\line(1,0){20}}
-      \put(60,-0.2){\color{green}\line(1,0){20}}
-      \put(50, 2.2){\line(1,0){20}}
-      \put(50, 2.0){\line(1,0){20}}
-      \put(50, 1.8){\line(1,0){20}}
-      \put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
-      \put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
-      \multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
-      \multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \put(55,6){\cb{$I_{j^-}^-$}}
-      \put(65,6){\cb{$I_{j^+}^-$}}
-      \put(60,-3){\cb{$x_j$}}
-      \thinlines
-      \put(30,15){\color{cyan}\line(1,0){60}}
-      \put(50,19){\color{green}\line(1,0){60}}
-      \multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
-      \multiput(20,0)(20,0){5}{\cb{$\bullet$}}
-      \multiput(40,15)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(27,15){\cb{\color{cyan}$S_r$}}
-      \multiput(60,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(47,19){\cb{\color{green}$S_r$}}
-      \put( 20,4){\cb{$x_{j-2}$}}
-      \put( 40,4){\cb{$x_{j-1}$}}
-      \put( 80,4){\cb{$x_{j+1}$}}
-      \put(100,4){\cb{$x_{j+2}$}}
-      \put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
-      \put( 70,-3){\cb{\color{green}$x_{\jph}$}}
-      \thicklines
-      \put(50,0){\color{cyan}\line(0,1){25}}
-      \put(70,0){\color{green}\line(0,1){25}}
-    \end{picture}
-  \end{center}
-  \caption{When $a<0$, the base set on which interpolation of QUICK Scheme based on 
-    grid value is operated: $S_r=\{u_{j-1}, u_{j}, u_{j+1}\}$ for $x_\jmh$, and 
-    $S_r=\{u_{j}, u_{j+1}, u_{j+2}\}$ for $x_\jph$.
-  } \label{fig:pQUICKfhStenR}
+\begin{center}
+\unitlength=1mm
+\begin{picture}(120,25)
+% \multiput(0,0)(5,0){25}{\color{red}\line(0,1){25}}
+% \multiput(0,0)(0,5){6}{\color{red}\line(1,0){120}}
+\thicklines
+\put(10,0){\line(1,0){100}}
+\put(40, 0.2){\color{cyan}\line(1,0){20}}
+\put(40,-0.2){\color{cyan}\line(1,0){20}}
+\put(60, 0.2){\color{green}\line(1,0){20}}
+\put(60,-0.2){\color{green}\line(1,0){20}}
+\put(50, 2.2){\line(1,0){20}}
+\put(50, 2.0){\line(1,0){20}}
+\put(50, 1.8){\line(1,0){20}}
+\put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
+\put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
+\multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
+\multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
+\multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
+\put(55,6){\cb{$I_{j^-}^-$}}
+\put(65,6){\cb{$I_{j^+}^-$}}
+\put(60,-3){\cb{$x_j$}}
+\thinlines
+\put(30,15){\color{cyan}\line(1,0){60}}
+\put(50,19){\color{green}\line(1,0){60}}
+\multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
+\multiput(20,0)(20,0){5}{\cb{$\bullet$}}
+\multiput(40,15)(20,0){3}{\cb{\color{cyan}$\bullet$}}\put(27,15){\cb{\color{cyan}$S_r$}}
+\multiput(60,19)(20,0){3}{\cb{\color{green}$\bullet$}}\put(47,19){\cb{\color{green}$S_r$}}
+\put( 20,4){\cb{$x_{j-2}$}}
+\put( 40,4){\cb{$x_{j-1}$}}
+\put( 80,4){\cb{$x_{j+1}$}}
+\put(100,4){\cb{$x_{j+2}$}}
+\put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
+\put( 70,-3){\cb{\color{green}$x_{\jph}$}}
+\thicklines
+\put(50,0){\color{cyan}\line(0,1){25}}
+\put(70,0){\color{green}\line(0,1){25}}
+\end{picture}
+\end{center}
+\caption{When $a<0$, the base set on which interpolation of QUICK Scheme based on 
+grid value is operated: $S_r=\{u_{j-1}, u_{j}, u_{j+1}\}$ for $x_\jmh$, and 
+$S_r=\{u_{j}, u_{j+1}, u_{j+2}\}$ for $x_\jph$.
+} \label{fig:pQUICKfhStenR}
 \end{figure}
 
 As for the case of $a<0$ in Fig.~\ref{fig:pQUICKfhStenR}, the discretized equation
 is
 \begin{equation}
-  \frac{1}{24}\left(2\frac{d u_{j-1}}{dt}+19\frac{du_j}{dt}+4\frac{du_{j+1}}{dt}-\frac{du_{j+2}}{dt}\right)
-  +\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0.
-  \label{eq:intx2}
+\frac{1}{24}\left(2\frac{d u_{j-1}}{dt}+19\frac{du_j}{dt}+4\frac{du_{j+1}}{dt}-\frac{du_{j+2}}{dt}\right)
++\frac{1}{\Delta x}\left(f_{\jph}-f_{\jmh}\right)=0.
+\label{eq:intx2}
 \end{equation}
 
 \begin{figure}[htb]
-  \begin{center}
-    \unitlength=1mm
-    \begin{picture}(120,25)
-      % \multiput(0,0)(5,0){25}{\color{red}\line(0,1){25}}
-      % \multiput(0,0)(0,5){6}{\color{red}\line(1,0){120}}
-      \thicklines
-      \put(10,0){\line(1,0){100}}
-      \put(40, 0.2){\color{cyan}\line(1,0){20}}
-      \put(40,-0.2){\color{cyan}\line(1,0){20}}
-      \put(60, 0.2){\color{green}\line(1,0){20}}
-      \put(60,-0.2){\color{green}\line(1,0){20}}
-      \put(50, 2.2){\line(1,0){20}}
-      \put(50, 2.0){\line(1,0){20}}
-      \put(50, 1.8){\line(1,0){20}}
-      \put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
-      \put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
-      \multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
-      \multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
-      \multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
-      \multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
-      \multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
-      \multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
-      \multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
-      \put(55,6){\cb{$I_{j^-}$}}
-      \put(65,6){\cb{$I_{j^+}$}}
-      \put(60,-3){\cb{$x_j$}}
-      \thinlines
-      \put(10,15){\color{cyan}\line(1,0){80}}
-      \put(30,19){\color{green}\line(1,0){80}}
-      \multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
-      \multiput(20,0)(20,0){5}{\cb{$\bullet$}}
-      \multiput(20,15)(20,0){4}{\cb{\color{cyan}$\bullet$}}\put(7,15){\cb{\color{cyan}$S_0$}}
-      \multiput(40,19)(20,0){4}{\cb{\color{green}$\bullet$}}\put(27,19){\cb{\color{green}$S_0$}}
-      \put( 20,4){\cb{$x_{j-2}$}}
-      \put( 40,4){\cb{$x_{j-1}$}}
-      \put( 80,4){\cb{$x_{j+1}$}}
-      \put(100,4){\cb{$x_{j+2}$}}
-      \put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
-      \put( 70,-3){\cb{\color{green}$x_{\jph}$}}
-      \thicklines
-      \put(50,0){\color{cyan}\line(0,1){25}}
-      \put(70,0){\color{green}\line(0,1){25}}
-    \end{picture}
-  \end{center}
-  \caption{The base set on which interpolation of $4$th order scheme on $x_{\jmh}$ and $x_{\jph}$.} \label{fig:pQUICKfhSten0}
+\begin{center}
+\unitlength=1mm
+\begin{picture}(120,25)
+% \multiput(0,0)(5,0){25}{\color{red}\line(0,1){25}}
+% \multiput(0,0)(0,5){6}{\color{red}\line(1,0){120}}
+\thicklines
+\put(10,0){\line(1,0){100}}
+\put(40, 0.2){\color{cyan}\line(1,0){20}}
+\put(40,-0.2){\color{cyan}\line(1,0){20}}
+\put(60, 0.2){\color{green}\line(1,0){20}}
+\put(60,-0.2){\color{green}\line(1,0){20}}
+\put(50, 2.2){\line(1,0){20}}
+\put(50, 2.0){\line(1,0){20}}
+\put(50, 1.8){\line(1,0){20}}
+\put(0,0){\color{cyan}\qbezier(40,8)(50,15)(60,12)}
+\put(0,0){\color{green}\qbezier(60,12)(70,6)(80,7)}
+\multiput(51,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(52,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(53,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(54,0.5)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(55,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(56,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(57,0)(0,1){13}{\color{cyan}\cb{$\cdot$}}
+\multiput(58,0.5)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(59,0)(0,1){12}{\color{cyan}\cb{$\cdot$}}
+\multiput(60,0.5)(0,1){12}{\color{green}\cb{$\cdot$}}
+\multiput(61,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(62,0.5)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(63,0)(0,1){11}{\color{green}\cb{$\cdot$}}
+\multiput(64,0.5)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(65,0)(0,1){10}{\color{green}\cb{$\cdot$}}
+\multiput(66,0.5)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(67,0)(0,1){9}{\color{green}\cb{$\cdot$}}
+\multiput(68,0.5)(0,1){8}{\color{green}\cb{$\cdot$}}
+\multiput(69,0)(0,1){8}{\color{green}\cb{$\cdot$}}
+\put(55,6){\cb{$I_{j^-}$}}
+\put(65,6){\cb{$I_{j^+}$}}
+\put(60,-3){\cb{$x_j$}}
+\thinlines
+\put(10,15){\color{cyan}\line(1,0){80}}
+\put(30,19){\color{green}\line(1,0){80}}
+\multiput(10,0)(20,0){6}{\color{blue}\line(0,1){25}}
+\multiput(20,0)(20,0){5}{\cb{$\bullet$}}
+\multiput(20,15)(20,0){4}{\cb{\color{cyan}$\bullet$}}\put(7,15){\cb{\color{cyan}$S_0$}}
+\multiput(40,19)(20,0){4}{\cb{\color{green}$\bullet$}}\put(27,19){\cb{\color{green}$S_0$}}
+\put( 20,4){\cb{$x_{j-2}$}}
+\put( 40,4){\cb{$x_{j-1}$}}
+\put( 80,4){\cb{$x_{j+1}$}}
+\put(100,4){\cb{$x_{j+2}$}}
+\put( 50,-3){\cb{\color{cyan}$x_{\jmh}$}}
+\put( 70,-3){\cb{\color{green}$x_{\jph}$}}
+\thicklines
+\put(50,0){\color{cyan}\line(0,1){25}}
+\put(70,0){\color{green}\line(0,1){25}}
+\end{picture}
+\end{center}
+\caption{The base set on which interpolation of $4$th order scheme on $x_{\jmh}$ and $x_{\jph}$.} \label{fig:pQUICKfhSten0}
 \end{figure}
 In Fig.~\ref{fig:pQUICKfhSten0}, interpolation polynomial constructed on
 interval $[x_{j-1}, x_j]$ with base set $S_0 = \{u_{j-1}, u_j, u_{j+1},
@@ -1230,52 +1234,52 @@ C_3 = -\frac{1}{6\Delta x^3}\left[3(u_{j+1}-u_j)-(u_{j+2}-u_{j-1})\right].\\
 \]
 The integral on interval $[x_\jmh, x_\jph]$ is
 \begin{align*}
-  T_4\equiv I_{j^+} + I_{j^-} &= \int_{-\frac12\Delta x}^0 p(x) \diff x + 
-  \int_0^{\frac12\Delta x} p(x) \diff x \\
-  &= \frac{\Delta x}{384}(-7 u_{j-2}+44u_{j-1}+310 u_j+44 u_{j+1}-7 u_{j+2}),
+T_4\equiv I_{j^+} + I_{j^-} &= \int_{-\frac12\Delta x}^0 p(x) \diff x + 
+\int_0^{\frac12\Delta x} p(x) \diff x \\
+&= \frac{\Delta x}{384}(-7 u_{j-2}+44u_{j-1}+310 u_j+44 u_{j+1}-7 u_{j+2}),
 \end{align*}
 with
 \[
 \begin{array}{ll}
-  I_{j^+} &\displaystyle \equiv\int_{-\frac{1}{2}\Delta x}^0 p(x)dx = \frac{1}{2}C_0\Delta x-\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3-\frac{1}{64}C_3\Delta x^4 \\[4mm]
-  &\displaystyle
-  = \frac{1}{384}(-9 u_{j-1}+155u_j+53u_{j+1}-7u_{j+2})\Delta x\\
+I_{j^+} &\displaystyle \equiv\int_{-\frac{1}{2}\Delta x}^0 p(x)dx = \frac{1}{2}C_0\Delta x-\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3-\frac{1}{64}C_3\Delta x^4 \\[4mm]
+&\displaystyle
+= \frac{1}{384}(-9 u_{j-1}+155u_j+53u_{j+1}-7u_{j+2})\Delta x\\
 \end{array}
 \]
 \[
 \begin{array}{ll}
-  I_{j+1^-} &\displaystyle \equiv\int_0^{\frac{1}{2}\Delta x} p(x)dx = \frac{1}{2}C_0\Delta x+\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3+\frac{1}{64}C_3\Delta x^4 \\[4mm]
-  &\displaystyle
-  = \frac{1}{384}(-7 u_{j-1}+53u_j+155u_{j+1}-9u_{j+2})\Delta x\\
+I_{j+1^-} &\displaystyle \equiv\int_0^{\frac{1}{2}\Delta x} p(x)dx = \frac{1}{2}C_0\Delta x+\frac{1}{8}C_1\Delta x^2+\frac{1}{24}C_2\Delta x^3+\frac{1}{64}C_3\Delta x^4 \\[4mm]
+&\displaystyle
+= \frac{1}{384}(-7 u_{j-1}+53u_j+155u_{j+1}-9u_{j+2})\Delta x\\
 \end{array}
 \]
 
 Considering the relationship between coefficients of third- and fourth-order
 interpolation polynomial:
 \begin{equation}
-  \left\{\begin{array}{l}
-  \displaystyle
-  C_0^{(3)}=C_0^{(4)}+\frac{3}{8}\kappa C_3^{(4)}\Delta x^3, \\[3mm]
-  \displaystyle
-  C_1^{(3)}=C_1^{(4)}+\frac{1}{4}\abs{\kappa} C_3^{(4)}\Delta x^2, \\[3mm]
-  \displaystyle
-  C_2^{(3)}=C_2^{(4)}-\frac{3}{2}\kappa C_3^{(4)}\Delta x, \\
-  \end{array},\right. 
-  \label{eq:C3-C4}
+\left\{\begin{array}{l}
+\displaystyle
+C_0^{(3)}=C_0^{(4)}+\frac{3}{8}\kappa C_3^{(4)}\Delta x^3, \\[3mm]
+\displaystyle
+C_1^{(3)}=C_1^{(4)}+\frac{1}{4}\abs{\kappa} C_3^{(4)}\Delta x^2, \\[3mm]
+\displaystyle
+C_2^{(3)}=C_2^{(4)}-\frac{3}{2}\kappa C_3^{(4)}\Delta x, \\
+\end{array},\right. 
+\label{eq:C3-C4}
 \end{equation}
 the integrals given by the fourth order interpolation polynomial is
 \[
 \begin{array}{ll}
-  I^{(3)}_{j^+}&\displaystyle =I^{(4)}_{j^+}+C_3^{(4)}\int_{-\frac{1}{2}\Delta x}^0 \left(\frac{3}{8}\kappa \Delta x +\frac{1}{4}\abs{\kappa}\Delta x^2\cdot x -\frac{3}{2}\kappa \Delta x\cdot x^2 -\abs{\kappa}x^3\right) dx \\[4mm]
-  &\displaystyle = I^{(4)}_{j^+}+\frac{1}{64}\left(8\kappa-\abs{\kappa}\right)\Delta x^4C_3^{(4)}; \\[4mm]
-  I^{(3)}_{j+1^-}&\displaystyle =I^{(4)}_{j+1^-}+C_3^{(4)}\int_0^{\frac{1}{2}\Delta x} \left(\frac{3}{8}\kappa \Delta x +\frac{1}{4}\abs{\kappa}\Delta x^2\cdot x -\frac{3}{2}\kappa \Delta x\cdot x^2 -\abs{\kappa}x^3\right) dx \\[4mm]
-  &\displaystyle= I^{(4)}_{j+1^-}+\frac{1}{64}\left(8\kappa+\abs{\kappa}\right)\Delta x^4C_3^{(4)}.\\
+I^{(3)}_{j^+}&\displaystyle =I^{(4)}_{j^+}+C_3^{(4)}\int_{-\frac{1}{2}\Delta x}^0 \left(\frac{3}{8}\kappa \Delta x +\frac{1}{4}\abs{\kappa}\Delta x^2\cdot x -\frac{3}{2}\kappa \Delta x\cdot x^2 -\abs{\kappa}x^3\right) dx \\[4mm]
+&\displaystyle = I^{(4)}_{j^+}+\frac{1}{64}\left(8\kappa-\abs{\kappa}\right)\Delta x^4C_3^{(4)}; \\[4mm]
+I^{(3)}_{j+1^-}&\displaystyle =I^{(4)}_{j+1^-}+C_3^{(4)}\int_0^{\frac{1}{2}\Delta x} \left(\frac{3}{8}\kappa \Delta x +\frac{1}{4}\abs{\kappa}\Delta x^2\cdot x -\frac{3}{2}\kappa \Delta x\cdot x^2 -\abs{\kappa}x^3\right) dx \\[4mm]
+&\displaystyle= I^{(4)}_{j+1^-}+\frac{1}{64}\left(8\kappa+\abs{\kappa}\right)\Delta x^4C_3^{(4)}.\\
 \end{array}
 \]
 \[
 \begin{array}{ll}
-  T_3 = I^{(3)}_{j^+}+ I^{(3)}_{j^-} = T_4&\displaystyle +\frac{\kappa\Delta x}{48}(-u_{j-2}+2u_{j-1}-2u_{j+1}+u_{j+2}) \\[4mm]
-  &\displaystyle +\frac{\abs{\kappa}\Delta x}{384} (-u_{j-2}+4u_{j-1}-6u_j+4u_{j+1}-u_{j+2}). \\
+T_3 = I^{(3)}_{j^+}+ I^{(3)}_{j^-} = T_4&\displaystyle +\frac{\kappa\Delta x}{48}(-u_{j-2}+2u_{j-1}-2u_{j+1}+u_{j+2}) \\[4mm]
+&\displaystyle +\frac{\abs{\kappa}\Delta x}{384} (-u_{j-2}+4u_{j-1}-6u_j+4u_{j+1}-u_{j+2}). \\
 \end{array}
 \]
 Meanwhile the flux can also be expressed similarly (take $f_\jph$ as example):
@@ -1284,9 +1288,9 @@ f_{\jph}=\frac{9}{16}(f_j+f_{j+1})-\frac{1}{16}(f_{j-1}+f_{j+2})+{\color{red}\fr
 \]
 With the above results, the numerical scheme is obtained:
 \begin{equation}
-  \sum_{k=-2}^2\beta_k \frac{d u_{j+k}}{dt}+\frac{1}{\Delta
-    x}\left(f_{\jph}-f_{\jmh}\right)=0.
-  \label{eq:QUICK-duj-dt-nodal}
+\sum_{k=-2}^2\beta_k \frac{d u_{j+k}}{dt}+\frac{1}{\Delta
+x}\left(f_{\jph}-f_{\jmh}\right)=0.
+\label{eq:QUICK-duj-dt-nodal}
 \end{equation}
 The first term of LHS of Eq.~(\ref{eq:QUICK-duj-dt-nodal}) is actually
 $\frac{d}{dt}T_3$, so the coefficients are:
@@ -1304,12 +1308,12 @@ $\frac{d}{dt}T_3$, so the coefficients are:
 \beta_{+2} = -\frac{1}{384} (7-8\kappa+\abs{\kappa}),\\[4mm]
 \end{array}\right.
 \]
-With the help of CAS, the modified equation of Eq.~(\ref{eq:QUICK-duj-dt-nodal})
+With the help of CAS, the mPDE of Eq.~(\ref{eq:QUICK-duj-dt-nodal})
 is
 \[
 u_t+au_x=\frac{5}{48}\kappa a\Delta x^3 u_{xxxx} +
 \frac{(47-15\abs{\kappa})a\Delta x^4 }{5760}u_{xxxxx} + \frac{19\kappa
-  a\Delta x^5}{1152}u_{xxxxxx}+\ldots
+a\Delta x^5}{1152}u_{xxxxxx}+\ldots
 \]
 Judging from the leading term of truncation terms, the scheme is a third order
 one, and is one order higher than the primary QUICK scheme.
@@ -1352,8 +1356,8 @@ converges to the solution of the differential equation\footnote{In the
 case of linear equation, this is proved by the Lax equivalence theorem\cite{lax1956survey}.}.
 The speed of convergence is measured with norm of truncation error:
 \begin{equation}
-  E\equiv\aabs{u_h-u_e} = Ch^p,
-  \label{eq:error-norm}
+E\equiv\aabs{u_h-u_e} = Ch^p,
+\label{eq:error-norm}
 \end{equation}
 with $h$ as grid size representing $\Delta x$ and $\Delta t$, $u_h$ as numerical
 solution, $u_e$ as exact solution, $C$ as constant independent of $h$, and
@@ -1397,17 +1401,16 @@ accuracy of schemes based on grid average (which are ubiquitous in
 FVMs) becomes feasible. A Theoretical analysis implies that:
 \begin{enumerate}
 \item The correct order of accuracy of a specific scheme, especially
-  high order ones, can only be obtained by rigorous deduction of modified
-  equation, and heuristic estimation by order of discretization would
-  lead to incorrect results (pseudo high order schemes).
+high order ones, can only be obtained by rigorous deduction of
+mPDE.
 \item The misuse of grid average and nodal value in constructing numerical
-  schemes will lead to reducing the order of accuracy. 
+schemes will lead to reducing the order of accuracy. 
 \item The absolute error of high order scheme decrease very fast as
-  grid size reduces, but due to existence of round-off error, the
-  absolute error does not decrease infinitely. Theoretically there
-  exists an optimum grid size which minimizes the absolute
-  error. Numerical study on this will be done in future research.
-  
+grid size reduces, but due to existence of round-off error, the
+absolute error does not decrease infinitely. Theoretically there
+exists an optimum grid size which minimizes the absolute
+error. Numerical study on this will be done in future research.
+
 \end{enumerate}
 
 
@@ -1424,34 +1427,34 @@ Here we prove that the coefficient matrix $\bm C^{(n)}$ satisfies
 $\bm C^{(n-1)}=\Lambda^{(n-1)}\bm R^{(n-1)}=\bm C^{(n)}_s +
 C^{(n)}_{n-1}\Lambda^{(n-1)}\bm x_s^{(n)}$ with $\Lambda$ is actually:
 \begin{equation}
-  \Lambda^{(n-1)}\bm x_s^{(n)}=\Matrix{\begin{array}{r} \displaystyle -\frac{(-1)^{n-1}}{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\ \vdots\hspace{1cm} \\ \displaystyle -\frac{n-2}{n}\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm] \displaystyle \frac{n-1}{n}\sum_{i=1}^n x_i \\ \end{array}}\equiv\bm s. \label{eq:appd-C-n-C-n1-s}
+\Lambda^{(n-1)}\bm x_s^{(n)}=\Matrix{\begin{array}{r} \displaystyle -\frac{(-1)^{n-1}}{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\ \vdots\hspace{1cm} \\ \displaystyle -\frac{n-2}{n}\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm] \displaystyle \frac{n-1}{n}\sum_{i=1}^n x_i \\ \end{array}}\equiv\bm s. \label{eq:appd-C-n-C-n1-s}
 \end{equation}
 
 To prove the property, we need to prove that
 \begin{equation}
-  W^{(n-1)}\bm s = \bm x_s^{(n)}.
-  \label{eq:appd-Wsx}
+W^{(n-1)}\bm s = \bm x_s^{(n)}.
+\label{eq:appd-Wsx}
 \end{equation}
 First we define $\tilde{W}^{(n-1)}$, $\tilde{\bm s}$ and $\tilde{\bm x}_s^{(n)}$
 as:
 \[
-  \tilde W^{(n-1)}=\Matrix{\begin{array}{cccc} x_2-x_1 & x_2^2-x_1^2 & \cdots & x_2^{n-1}-x_1^{n-1} \\ x_3-x_2 & x_3^2-x_2^2 & \cdots & x_3^{n-1}-x_2^{n-1} \\ \cdots& \cdots& \cdots& \cdots \\ x_{n}-x_{n-1} & x_{n}^2-x_{n-1}^2 & \cdots & x_{n}^{n-1}-x_{n-1}^{n-1} \\ \end{array}},\hspace{5mm} \tilde{\bm x}_s =\Matrix{\begin{array}{c} x_2^n-x_1^n \\ x_3^n-x_2^n \\ \vdots \\ x_n^n-x_{n-1}^n \\ \end{array} } \] \[\tilde{\bm s}=\Matrix{\begin{array}{r} \displaystyle (-1)^{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\ \vdots\hspace{1cm} \\ \displaystyle -\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm] \displaystyle \sum_{i=1}^n x_i \\ \end{array}}\equiv \Matrix{\begin{array}{r} (-1)^{n}R_{n-1}\\ \vdots\ \ \\ -R_2\\ R_1 \\ \end{array}}.
+\tilde W^{(n-1)}=\Matrix{\begin{array}{cccc} x_2-x_1 & x_2^2-x_1^2 & \cdots & x_2^{n-1}-x_1^{n-1} \\ x_3-x_2 & x_3^2-x_2^2 & \cdots & x_3^{n-1}-x_2^{n-1} \\ \cdots& \cdots& \cdots& \cdots \\ x_{n}-x_{n-1} & x_{n}^2-x_{n-1}^2 & \cdots & x_{n}^{n-1}-x_{n-1}^{n-1} \\ \end{array}},\hspace{5mm} \tilde{\bm x}_s =\Matrix{\begin{array}{c} x_2^n-x_1^n \\ x_3^n-x_2^n \\ \vdots \\ x_n^n-x_{n-1}^n \\ \end{array} } \] \[\tilde{\bm s}=\Matrix{\begin{array}{r} \displaystyle (-1)^{n}\sum_{i_1<i_2<\cdots<i_{n-1}}^n x_{i_1}x_{i_2}\cdots x_{i_{n-1}} \\ \vdots\hspace{1cm} \\ \displaystyle -\sum_{i_1<i_2}^n x_{i_1}x_{i_2} \\[5mm] \displaystyle \sum_{i=1}^n x_i \\ \end{array}}\equiv \Matrix{\begin{array}{r} (-1)^{n}R_{n-1}\\ \vdots\ \ \\ -R_2\\ R_1 \\ \end{array}}.
 \]
 with $R_n = x_1x_2\cdots x_n$. Since $x_{n+1}$ does not appear in
 Eq.~(\ref{eq:appd-C-n-C-n1-s}), the proof of Eq.~(\ref{eq:appd-Wsx}) is
 equivalent to the proof of
 \begin{equation}
-  \tilde{W}^{(n-1)}\tilde{\bm s} = \tilde{\bm x}_s^{(n)}.
-  \label{eq:appd-Wsxt}
+\tilde{W}^{(n-1)}\tilde{\bm s} = \tilde{\bm x}_s^{(n)}.
+\label{eq:appd-Wsxt}
 \end{equation}
 
 By definition of $R_n$, $x_1,x_2,\cdots,x_n$ are the $n$ roots of the $n$th order equation:
 \[
-  f(x) = x^n-R_1x^{n-1}+R_2x^{n-2}-\cdots -(-1)^nR_{n-1}x+ (-1)^nR_n.
+f(x) = x^n-R_1x^{n-1}+R_2x^{n-2}-\cdots -(-1)^nR_{n-1}x+ (-1)^nR_n.
 \]
 So $f(x_j)=0$ is equivalent to:
 \[
-  x_j^n=R_1x_j^{n-1}-R_2x_j^{n-2}-\cdots +(-1)^nR_{n-1}x_j- (-1)^nR_n,\hspace{5mm}j=1,2,\cdots,n.
+x_j^n=R_1x_j^{n-1}-R_2x_j^{n-2}-\cdots +(-1)^nR_{n-1}x_j- (-1)^nR_n,\hspace{5mm}j=1,2,\cdots,n.
 \]
 For $j=2,3,\cdots,n$, $x_j^n-x_{j-1}^n$ provides Eq.~(\ref{eq:appd-Wsxt}) which
 means that Eq.~(\ref{eq:appd-C-n-C-n1-s}) holds. This finishes the proof.
